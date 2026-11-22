@@ -2,27 +2,36 @@
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>ویرایشگر PDF</title>
 <style>
 @font-face{font-family:V;src:url(./fonts/Vazirmatn.ttf)}
 :root{--bg:#e9ecef;--fg:#1b1f24;--bar:#fff;--ac:#0f766e;--bd:#cfd4da}
 @media(prefers-color-scheme:dark){:root{--bg:#14171a;--fg:#e8eaed;--bar:#21252a;--ac:#5eead4;--bd:#3a3f46}}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:V,Tahoma,sans-serif}
-#bar{position:sticky;top:0;z-index:50;display:flex;gap:6px;padding:8px;overflow-x:auto;align-items:center;background:var(--bar);border-bottom:1px solid var(--bd)}
-#bar button,#bar label.b{flex:none;padding:7px 12px;border:1px solid var(--bd);border-radius:8px;background:transparent;color:var(--fg);font:inherit;cursor:pointer;white-space:nowrap}
-#bar .on{background:var(--ac);color:#fff;border-color:var(--ac)}
-#bar input[type=number]{width:52px;font:inherit}
-#bar input[type=color]{width:36px;height:32px;padding:0;border:0;background:none}
-#bar small{flex:none}
-#save,#word{background:var(--ac)!important;color:#fff!important}
-#pages{padding:10px 0 80px}
+#pages{padding:10px 0 130px}
+button,label,header,nav{-webkit-tap-highlight-color:transparent;user-select:none}
+:root{--top:#0f766e;--onac:#fff}
+@media(prefers-color-scheme:dark){:root{--top:#134e4a;--onac:#04201d}}
+#hd{position:sticky;top:0;z-index:60}
+#top{display:flex;gap:6px;align-items:center;padding:calc(8px + env(safe-area-inset-top)) 10px 8px;background:var(--top);color:#fff;overflow-x:auto}
+#top b{font-size:17px;flex:1;white-space:nowrap}
+#top button,#top label.b{flex:none;border:1px solid #fff6;border-radius:10px;background:#fff2;color:#fff;font:13px V,Tahoma,sans-serif;padding:7px 10px;white-space:nowrap}
+#props{display:flex;gap:8px;align-items:center;padding:6px 10px;overflow-x:auto;background:var(--bar);border-bottom:1px solid var(--bd);font-size:13px}
+#props select,#props input[type=number]{font:inherit;padding:5px;border-radius:8px;border:1px solid var(--bd);background:var(--bar);color:var(--fg)}
+#props input[type=number]{width:54px}
+#props input[type=color]{width:34px;height:30px;padding:0;border:0;background:none}
+#props label{white-space:nowrap}
+#dock{position:fixed;left:0;right:0;bottom:0;z-index:60;display:flex;justify-content:space-around;background:var(--bar);border-top:1px solid var(--bd);padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+#dock button{display:flex;flex-direction:column;align-items:center;gap:1px;border:0;background:none;color:var(--fg);font:11px V,Tahoma,sans-serif;padding:4px 8px;border-radius:12px}
+#dock button span{font-size:20px;line-height:1.2}
+#dock .on{background:var(--ac);color:var(--onac)}
 .pg{position:relative;margin:12px auto;background:#fff;box-shadow:0 1px 8px #0004;direction:ltr}
 .pg canvas,.pg svg,.lay{position:absolute;left:0;top:0}
 svg,.lay{width:100%;height:100%;pointer-events:none}
 svg *{pointer-events:stroke;cursor:pointer}
 .t{position:absolute;pointer-events:auto;white-space:pre;line-height:1.2;outline:none;color:#000;font-family:V,Tahoma,sans-serif;padding:0;margin:0}
-.t:hover{outline:1px dashed var(--ac)}
+.t{outline:1px dotted #0f766e66}
 .t:focus,.sel{outline:2px solid var(--ac)!important}
 .add{cursor:move;min-width:20px}
 .add:focus{cursor:text}
@@ -30,31 +39,31 @@ svg *{pointer-events:stroke;cursor:pointer}
 .im img{width:100%;height:100%;pointer-events:none;display:block}
 body.draw .pg{touch-action:none;cursor:crosshair}
 body.draw .t,body.draw .im{pointer-events:none}
-#bar select{flex:none;font:inherit;padding:6px;border-radius:8px;border:1px solid var(--bd);background:var(--bar);color:var(--fg)}
 #empty{text-align:center;padding:60px 20px;opacity:.7}
 </style>
 </head>
 <body>
-<div id="bar">
-  <label class="b">باز کردن PDF<input id="file" type="file" accept="application/pdf" hidden></label>
-  <button data-t="select" class="on">انتخاب</button>
-  <button data-t="text">متن</button>
-  <button data-t="line">خط</button>
-  <button data-t="rect">مستطیل</button>
-  <label class="b">تصویر<input id="img" type="file" accept="image/*" hidden></label>
-  <select id="font" title="فونت"></select>
-  <input id="col" type="color" value="#000000" title="رنگ">
-  <small>اندازه</small><input id="sz" type="number" value="18" min="4">
-  <small>ضخامت</small><input id="lw" type="number" value="2" min="1">
-  <label class="b"><input id="fill" type="checkbox"> پر</label>
-  <button data-t="erase">پاک‌کن</button>
-  <button id="del">حذف</button>
-  <button id="save">خروجی PDF</button>
-  <button id="word">خروجی Word</button>
+<div id="hd">
+<header id="top"><b>ویرایشگر PDF</b>
+  <label class="b">📂 باز کردن<input id="file" type="file" accept="application/pdf" hidden></label>
+  <button id="ocr">🔍 OCR</button><button id="save">PDF</button><button id="word">Word</button></header>
+<div id="props"><select id="font" title="فونت"></select><input id="col" type="color" value="#000000" title="رنگ">
+  <span>اندازه</span><input id="sz" type="number" value="18" min="4"><span>ضخامت</span><input id="lw" type="number" value="2" min="1">
+  <label><input id="fill" type="checkbox"> پر</label></div>
 </div>
+<nav id="dock">
+  <button data-t="select" class="on"><span>👆</span>انتخاب</button>
+  <button data-t="text"><span>✏️</span>متن</button>
+  <button data-t="line"><span>╱</span>خط</button>
+  <button data-t="rect"><span>▭</span>مستطیل</button>
+  <label><button type="button" onclick="$('img').click()"><span>🖼</span>تصویر</button><input id="img" type="file" accept="image/*" hidden></label>
+  <button data-t="erase"><span>🧽</span>پاک‌کن</button>
+  <button id="del"><span>🗑</span>حذف</button>
+</nav>
 <div id="pages"><div id="empty">یک فایل PDF باز کنید. همهٔ کارها روی همین دستگاه انجام می‌شود و چیزی به سرور فرستاده نمی‌شود.</div></div>
 
 <script src="./lib/pdf.min.js"></script>
+<script src="./lib/tesseract.min.js"></script>
 <script src="./lib/pdf-lib.min.js"></script>
 <script src="./lib/fontkit.js"></script>
 <script src="./lib/docx.js"></script>
@@ -92,18 +101,30 @@ async function load(){
     for(const it of tc.items){
       if(!it.str.trim())continue;
       const t=pdfjsLib.Util.transform(vp.transform,it.transform),fs=Math.hypot(t[2],t[3]),x=t[4],y=t[5];
-      const px=ctx.getImageData(Math.max(0,Math.min(vp.width-1,x-2)),Math.max(0,Math.min(vp.height-1,y-fs*.9)),1,1).data;
-      const d=el('div','t');d.contentEditable=true;d.dir='auto';d.textContent=it.str;
-      Object.assign(d.style,{left:x+'px',top:(y-fs)+'px',fontSize:fs+'px',minWidth:it.width*S+'px'});
-      d._o={x,y,fs,w:it.width*S,bg:[px[0],px[1],px[2]],dirty:false};
-      d.oninput=()=>{d._o.dirty=true;d.style.background=`rgb(${d._o.bg})`};
-      d.onfocus=()=>{select(d);if(d._o.dirty)d.style.background=`rgb(${d._o.bg})`};
-      pg.L.append(d);
+      let nm='';try{nm=p.commonObjs.get(it.fontName).name||''}catch(_){}
+      mkItem(pg,{x,y,fs,w:it.width*S,str:it.str,bold:/bold|black|heavy/i.test(nm),italic:/italic|oblique/i.test(nm)});
     }
     w.addEventListener('pointerdown',e=>draw(e,pg));
   }
 }
 
+function mkItem(pg,o){
+  const ctx=pg.ctx,W=pg.cw,H=pg.ch,cl=(v,m)=>Math.max(0,Math.min(m-1,Math.round(v)));
+  const bx=cl(o.x,W),by=cl(o.y-o.fs,H),bw=Math.max(1,Math.min(W-bx,Math.round(o.w))),bh=Math.max(1,Math.min(H-by,Math.round(o.fs*1.2)));
+  const bg=ctx.getImageData(cl(o.x-2,W),cl(o.y-o.fs*.9,H),1,1).data,im=ctx.getImageData(bx,by,bw,bh).data;
+  let best=0,col=[0,0,0];
+  for(let i=0;i<im.length;i+=4){const k=Math.abs(im[i]-bg[0])+Math.abs(im[i+1]-bg[1])+Math.abs(im[i+2]-bg[2]);if(k>best){best=k;col=[im[i],im[i+1],im[i+2]]}}
+  if(best<90)col=[0,0,0];
+  const hx='#'+col.map(v=>v.toString(16).padStart(2,'0')).join('');
+  const d=el('div','t');d.contentEditable=true;d.dir='auto';d.textContent=o.str;d.dataset.c=hx;
+  Object.assign(d.style,{left:o.x+'px',top:(o.y-o.fs)+'px',fontSize:o.fs+'px',minWidth:o.w+'px',color:'transparent',caretColor:hx,
+    fontWeight:o.bold?'bold':'normal',fontStyle:o.italic?'italic':'normal'});
+  const m=d._o={x:o.x,y:o.y,fs:o.fs,w:o.w,bg:[bg[0],bg[1],bg[2]],dirty:false,bold:o.bold};
+  d.oninput=()=>{m.dirty=true;d.style.background=`rgb(${m.bg})`;d.style.color=d.dataset.c};
+  d.onfocus=()=>select(d);
+  d.onblur=()=>{if(!m.dirty)d.style.color='transparent'};
+  pg.L.append(d);return d;
+}
 function pos(e,pg){const r=pg.w.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]}
 function draw(e,pg){
   if(tool==='select')return;
@@ -142,7 +163,7 @@ function erase(e,pg){
     c.setAttribute('fill',`rgb(${px[0]},${px[1]},${px[2]})`);pg.svg.append(c)};
   addEventListener('pointermove',mv);addEventListener('pointerup',up);mv(e);
 }
-const touch=d=>{if(d._o){d._o.dirty=true;d.style.background=`rgb(${d._o.bg})`}};
+const touch=d=>{if(d._o){d._o.dirty=true;d.style.background=`rgb(${d._o.bg})`;d.style.color=d.dataset.c}};
 $('font').onchange=()=>{const k=$('font').value;if(sel&&sel.classList.contains('t')){sel.dataset.f=k;sel.style.fontFamily=`'${k}',Tahoma`;touch(sel)}};
 $('col').oninput=()=>{if(sel&&sel.classList.contains('t')){sel.dataset.c=$('col').value;sel.style.color=$('col').value;touch(sel)}};
 $('sz').oninput=()=>{if(sel&&sel.classList.contains('add'))sel.style.fontSize=$('sz').value+'px'};
@@ -201,7 +222,7 @@ $('save').onclick=async()=>{
           const o=d._o,fs=o.fs/S,txt=d.textContent,font=await gf(d.dataset.f);
           P.drawRectangle({x:o.x/S-1,y:H-(o.y+o.fs*.3)/S,width:Math.max(o.w,d.offsetWidth)/S+2,height:o.fs*1.25/S,color:toRgb('rgb('+o.bg+')')});
           if(txt.trim()){const tw=font.widthOfTextAtSize(txt,fs);
-            P.drawText(txt,{x:rtl(txt)?o.x/S+o.w/S-tw:o.x/S,y:H-o.y/S,size:fs,font,color:hex(d.dataset.c||'#000000')})}
+            for(const dx of o.bold?[0,fs*.03]:[0])P.drawText(txt,{x:(rtl(txt)?o.x/S+o.w/S-tw:o.x/S)+dx,y:H-o.y/S,size:fs,font,color:hex(d.dataset.c||'#000000')})}
         }
       }
       for(const s of pg.svg.children){
@@ -225,6 +246,26 @@ async function dl(blob,name){
     await C.Plugins.Share.share({title:name,url:w.uri,dialogTitle:'ذخیره یا اشتراک‌گذاری'});
   }else{const a=el('a');a.href=URL.createObjectURL(blob);a.download=name;a.click()}
 }
+let ocrW;
+$('ocr').onclick=async()=>{
+  if(!bytes)return alert('ابتدا یک PDF باز کنید.');
+  const b=$('ocr');b.textContent='⏳ …';
+  try{
+    if(!ocrW)ocrW=await Tesseract.createWorker(['fas','eng'],1,{workerPath:'./ocr/worker.min.js',corePath:'./ocr',langPath:'./ocr',gzip:false,workerBlobURL:false});
+    const pg=curPage(),{data}=await ocrW.recognize(pg.w.querySelector('canvas'));let n=0;
+    for(const ln of data.lines){
+      const t=ln.text.trim();if(!t||ln.confidence<40)continue;
+      const {x0,y0,x1,y1}=ln.bbox,h=y1-y0,area=(x1-x0)*h;
+      const dup=[...pg.L.children].some(d=>{if(!d.classList.contains('t'))return false;
+        const w=Math.min(x1,d.offsetLeft+d.offsetWidth)-Math.max(x0,d.offsetLeft),v=Math.min(y1,d.offsetTop+d.offsetHeight)-Math.max(y0,d.offsetTop);
+        return w>0&&v>0&&w*v>area*.3});
+      if(dup)continue;
+      mkItem(pg,{x:x0,y:y1-h*.22,fs:h*.78,w:x1-x0,str:t});n++;
+    }
+    alert(n?`${n} خط متن پیدا شد. روی هر خط بزنید و ویرایش کنید.`:'متن جدیدی پیدا نشد.');
+  }catch(e){alert('خطای OCR: '+e.message)}
+  b.textContent='🔍 OCR';
+};
 function wordLines(pg){
   const E=[];
   for(const d of pg.L.children){
