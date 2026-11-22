@@ -1,0 +1,42 @@
+name: Build APK
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - run: npm install
+      - name: Prepare www
+        run: |
+          mkdir -p www/lib www/fonts
+          cp index.html www/
+          cd www/lib
+          curl -fsSL -o pdf.min.js https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js
+          curl -fsSL -o pdf.worker.min.js https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js
+          curl -fsSL -o pdf-lib.min.js https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js
+          curl -fsSL -o fontkit.js https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js
+          curl -fsSL -o docx.js https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js
+          cd ../fonts
+          G=https://cdn.jsdelivr.net/gh/rastikerdar
+          curl -fsSL -o Vazirmatn.ttf $G/vazirmatn@v33.003/fonts/ttf/Vazirmatn-Regular.ttf
+          curl -fsSL -o Sahel.ttf $G/sahel-font/dist/Sahel.ttf || true
+          curl -fsSL -o Shabnam.ttf $G/shabnam-font/dist/Shabnam.ttf || true
+          curl -fsSL -o Samim.ttf $G/samim-font/dist/Samim.ttf || true
+          curl -fsSL -o Parastoo.ttf $G/parastoo-font/dist/Parastoo.ttf || true
+          curl -fsSL -o Gandom.ttf $G/gandom-font/dist/Gandom.ttf || true
+      - run: npx cap add android && npx cap sync android
+      - run: cd android && chmod +x gradlew && ./gradlew assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pdf-editor-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
