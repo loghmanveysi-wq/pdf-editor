@@ -22,9 +22,18 @@ button,label,header,nav{-webkit-tap-highlight-color:transparent;user-select:none
 #props input[type=number]{width:54px}
 #props input[type=color]{width:34px;height:30px;padding:0;border:0;background:none}
 #props label{white-space:nowrap}
+#props button{font:inherit;padding:4px 10px;border:1px solid var(--bd);border-radius:8px;background:transparent;color:var(--fg)}
 #dock{position:fixed;left:0;right:0;bottom:0;z-index:60;display:flex;justify-content:space-around;background:var(--bar);border-top:1px solid var(--bd);padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
 #dock button{display:flex;flex-direction:column;align-items:center;gap:1px;border:0;background:none;color:var(--fg);font:11px V,Tahoma,sans-serif;padding:4px 8px;border-radius:12px}
 #dock button span{font-size:20px;line-height:1.2}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:80;max-height:72vh;overflow:auto;background:var(--bar);border-top:1px solid var(--bd);border-radius:16px 16px 0 0;padding:12px 12px calc(12px + env(safe-area-inset-bottom));box-shadow:0 -4px 16px #0005}
+.sheet[hidden]{display:none}
+.sheet button,.sheet label.b{font:13px V,Tahoma,sans-serif;padding:9px 12px;border:1px solid var(--bd);border-radius:10px;background:transparent;color:var(--fg)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.grid button{display:flex;flex-direction:column;align-items:center;gap:2px}.grid span{font-size:22px}
+.row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--bd)}.row b{flex:1}
+#frl label{display:flex;gap:8px;align-items:center;padding:6px 0}#frl input,#frl select{flex:1;font:inherit;padding:6px}
+#sc{border:1px dashed var(--bd);width:100%;background:#fff;touch-action:none}
 #dock .on{background:var(--ac);color:var(--onac)}
 .pg{position:relative;margin:12px auto;background:#fff;box-shadow:0 1px 8px #0004;direction:ltr}
 .pg canvas,.pg svg,.lay{position:absolute;left:0;top:0}
@@ -46,10 +55,10 @@ body.draw .t,body.draw .im{pointer-events:none}
 <div id="hd">
 <header id="top"><b>ویرایشگر PDF</b>
   <label class="b">📂 باز کردن<input id="file" type="file" accept="application/pdf" hidden></label>
-  <button id="ocr">🔍 OCR</button><button id="save">PDF</button><button id="word">Word</button></header>
+  <button id="undo">↩</button><button id="ocr">🔍 OCR</button><button id="save">PDF</button><button id="word">Word</button></header>
 <div id="props"><select id="font" title="فونت"></select><input id="col" type="color" value="#000000" title="رنگ">
   <span>اندازه</span><input id="sz" type="number" value="18" min="4"><span>ضخامت</span><input id="lw" type="number" value="2" min="1">
-  <label><input id="fill" type="checkbox"> پر</label></div>
+  <label><input id="fill" type="checkbox"> پر</label><button id="bB"><b>B</b></button><button id="bI"><i>I</i></button><button id="bU"><u>U</u></button></div>
 </div>
 <nav id="dock">
   <button data-t="select" class="on"><span>👆</span>انتخاب</button>
@@ -59,9 +68,38 @@ body.draw .t,body.draw .im{pointer-events:none}
   <label><button type="button" onclick="$('img').click()"><span>🖼</span>تصویر</button><input id="img" type="file" accept="image/*" hidden></label>
   <button data-t="erase"><span>🧽</span>پاک‌کن</button>
   <button id="del"><span>🗑</span>حذف</button>
+  <button id="mm"><span>⋯</span>بیشتر</button>
 </nav>
 <div id="pages"><div id="empty">یک فایل PDF باز کنید. همهٔ کارها روی همین دستگاه انجام می‌شود و چیزی به سرور فرستاده نمی‌شود.</div></div>
 
+<div id="more" class="sheet" hidden><div class="grid">
+  <button id="mFind"><span>🔎</span>جستجو و جایگزینی</button>
+  <button id="mSign"><span>✍️</span>امضا</button>
+  <button data-t="note"><span>💬</span>یادداشت</button>
+  <button data-t="highlight"><span>🖍</span>هایلایت</button>
+  <button data-t="link"><span>🔗</span>لینک</button>
+  <button id="mMark"><span>🔖</span>نشانک</button>
+  <button id="mForm"><span>📝</span>تکمیل فرم</button>
+  <button data-t="ftext"><span>▭</span>فیلد متنی</button>
+  <button data-t="fcheck"><span>☑</span>چک‌باکس</button>
+  <button id="mPages"><span>📑</span>صفحه‌ها</button>
+  <button id="mPrint"><span>🖨</span>چاپ</button>
+  <button data-t="underline"><span>U̲</span>زیرخط</button>
+  <button data-t="strike"><span>S̶</span>خط‌خورده</button>
+  <button data-t="ink"><span>〰️</span>نقاشی آزاد</button>
+  <button data-t="arrow"><span>➜</span>پیکان</button>
+  <button data-t="ellipse"><span>◯</span>بیضی</button>
+  <button data-t="redact"><span>⬛</span>سانسور</button>
+  <button data-t="crop"><span>✂️</span>برش صفحه</button>
+  <button data-t="fdrop"><span>▾</span>فیلد کشویی</button>
+  <button id="mHF"><span>🔢</span>سرصفحه و پاصفحه</button>
+  <button id="mExt"><span>📤</span>استخراج صفحه‌ها</button>
+  <button id="mComp"><span>🗜</span>کاهش حجم</button>
+  <button id="mImg"><span>🖼</span>خروجی تصویر</button>
+</div></div>
+<div id="sig" class="sheet" hidden><canvas id="sc" width="300" height="150"></canvas><div class="row"><button id="sOk">ثبت امضا</button><button id="sClr">پاک</button><button id="sX">بستن</button></div></div>
+<div id="frm" class="sheet" hidden><div id="frl"></div><button onclick="$('frm').hidden=true">تأیید</button></div>
+<div id="pgm" class="sheet" hidden><div id="pgl"></div><div class="row"><label class="b">افزودن PDF<input id="pgAdd" type="file" accept="application/pdf" hidden></label><button id="pgX">بستن</button></div></div>
 <script src="./lib/pdf.min.js"></script>
 <script src="./lib/tesseract.min.js"></script>
 <script src="./lib/pdf-lib.min.js"></script>
@@ -73,11 +111,11 @@ const FONTS=Object.fromEntries(['Vazirmatn','Sahel','Shabnam','Samim','Parastoo'
 {const st=document.createElement('style');st.textContent=Object.entries(FONTS).map(([k,u])=>`@font-face{font-family:'${k}';src:url(${u})}`).join('');document.head.append(st);
  Object.keys(FONTS).forEach(k=>$('font').add(new Option(k,k)))}
 pdfjsLib.GlobalWorkerOptions.workerSrc='./lib/pdf.worker.min.js';
-let bytes,fname='edited.pdf',pages=[],tool='select',sel=null;
+let bytes,fname='edited.pdf',pages=[],tool='select',sel=null,fills={},marks=[];
 const el=(t,c)=>{const e=document.createElement(t);if(c)e.className=c;return e};
 const rtl=s=>/[\u0590-\u08FF]/.test(s);
 
-function setTool(t){tool=t;document.body.classList.toggle('draw',t!=='select');
+function setTool(t){tool=t;$('more').hidden=true;document.body.classList.toggle('draw',t!=='select');
   document.querySelectorAll('[data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t===t))}
 document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>setTool(b.dataset.t));
 function select(e){if(sel)sel.classList.remove('sel');sel=e;if(e)e.classList.add('sel')}
@@ -87,7 +125,7 @@ $('file').onchange=async e=>{const f=e.target.files[0];if(!f)return;
 
 async function load(){
   const doc=await pdfjsLib.getDocument({data:bytes.slice()}).promise;
-  $('pages').innerHTML='';pages=[];
+  $('pages').innerHTML='';pages=[];hist.length=0;
   for(let n=1;n<=doc.numPages;n++){
     const p=await doc.getPage(n),vp=p.getViewport({scale:S});
     const w=el('div','pg');w.style.width=vp.width+'px';w.style.height=vp.height+'px';
@@ -104,7 +142,7 @@ async function load(){
       let nm='';try{nm=p.commonObjs.get(it.fontName).name||''}catch(_){}
       mkItem(pg,{x,y,fs,w:it.width*S,str:it.str,bold:/bold|black|heavy/i.test(nm),italic:/italic|oblique/i.test(nm)});
     }
-    w.addEventListener('pointerdown',e=>draw(e,pg));
+    watch(pg);w.addEventListener('pointerdown',e=>draw(e,pg));
   }
 }
 
@@ -116,7 +154,7 @@ function mkItem(pg,o){
   for(let i=0;i<im.length;i+=4){const k=Math.abs(im[i]-bg[0])+Math.abs(im[i+1]-bg[1])+Math.abs(im[i+2]-bg[2]);if(k>best){best=k;col=[im[i],im[i+1],im[i+2]]}}
   if(best<90)col=[0,0,0];
   const hx='#'+col.map(v=>v.toString(16).padStart(2,'0')).join('');
-  const d=el('div','t');d.contentEditable=true;d.dir='auto';d.textContent=o.str;d.dataset.c=hx;
+  const d=el('div','t');d.contentEditable=true;d.dir='auto';d.textContent=o.str;d.dataset.c=hx;if(o.bold)d.dataset.b=1;if(o.italic)d.dataset.i=1;
   Object.assign(d.style,{left:o.x+'px',top:(o.y-o.fs)+'px',fontSize:o.fs+'px',minWidth:o.w+'px',color:'transparent',caretColor:hx,
     fontWeight:o.bold?'bold':'normal',fontStyle:o.italic?'italic':'normal'});
   const m=d._o={x:o.x,y:o.y,fs:o.fs,w:o.w,bg:[bg[0],bg[1],bg[2]],dirty:false,bold:o.bold};
@@ -130,6 +168,9 @@ function draw(e,pg){
   if(tool==='select')return;
   if(tool==='erase'){e.preventDefault();return erase(e,pg)}
   const [x,y]=pos(e,pg),c=$('col').value;
+  if(tool==='note'){e.preventDefault();const t=prompt('متن یادداشت');if(t)mkNote(pg,x,y,t);setTool('select');return}
+  if(tool==='ink'||tool==='arrow'){e.preventDefault();return trace(e,pg,tool)}
+  if(['link','ftext','fcheck','fdrop','highlight','underline','strike','redact','crop','ellipse'].includes(tool)){e.preventDefault();const k=tool;return box(e,pg,(X,Y,W,H)=>k==='crop'?cropPage(pg,X,Y,W,H):mkBox(pg,k,X,Y,W,H))}
   if(tool==='text'){e.preventDefault();addText(pg,x,y,'متن');setTool('select');return}
   const s=document.createElementNS(NS,tool==='line'?'line':'rect');
   s.setAttribute('stroke',c);s.setAttribute('stroke-width',$('lw').value);
@@ -146,7 +187,7 @@ function draw(e,pg){
 
 function erase(e,pg){
   const [x,y]=pos(e,pg),r=document.createElementNS(NS,'rect');
-  r.setAttribute('fill','#e11d4822');r.setAttribute('stroke','#e11d48');r.setAttribute('stroke-dasharray','5');pg.svg.append(r);
+  r.dataset.tmp=1;r.setAttribute('fill','#e11d4822');r.setAttribute('stroke','#e11d48');r.setAttribute('stroke-dasharray','5');pg.svg.append(r);
   let X=x,Y=y,W=0,H=0;
   const mv=ev=>{const[a,b]=pos(ev,pg);X=Math.min(x,a);Y=Math.min(y,b);W=Math.abs(a-x);H=Math.abs(b-y);
     r.setAttribute('x',X);r.setAttribute('y',Y);r.setAttribute('width',W);r.setAttribute('height',H)};
@@ -154,7 +195,7 @@ function erase(e,pg){
     if(W<4||H<4)return;
     const hit=(l,t,w,h)=>l<X+W&&l+w>X&&t<Y+H&&t+h>Y;
     for(const d of [...pg.L.children]){if(!hit(d.offsetLeft,d.offsetTop,d.offsetWidth,d.offsetHeight))continue;
-      if(d.classList.contains('add')||d.classList.contains('im'))d.remove();
+      if(!d._o)d.remove();
       else{d.textContent='';d._o.dirty=true;d.style.background=`rgb(${d._o.bg})`}}
     for(const s of [...pg.svg.children]){if(s.dataset.er)continue;const b=s.getBBox();if(hit(b.x,b.y,b.width,b.height))s.remove()}
     const cl=(v,m)=>Math.max(0,Math.min(m-1,Math.round(v))),px=pg.ctx.getImageData(cl(X-2,pg.cw),cl(Y-2,pg.ch),1,1).data;
@@ -183,12 +224,12 @@ function addText(pg,x,y,s){
   d.ondblclick=()=>d.focus();d.onfocus=()=>select(d);drag(d);pg.L.append(d);d.focus();
 }
 function curPage(){return pages.find(p=>{const r=p.w.getBoundingClientRect();return r.top<innerHeight*.6&&r.bottom>innerHeight*.3})||pages[0]}
-$('img').onchange=e=>{const f=e.target.files[0];if(!f||!pages.length)return;
-  const u=URL.createObjectURL(f),i=new Image();
+function addImg(u){const i=new Image();
   i.onload=()=>{const pg=curPage(),d=el('div','im'),k=Math.min(1,250/i.width);
     Object.assign(d.style,{left:'30px',top:'30px',width:i.width*k+'px',height:i.height*k+'px'});
     d.append(i);drag(d);pg.L.append(d);select(d)};
-  i.src=u;e.target.value=''};
+  i.src=u}
+$('img').onchange=e=>{const f=e.target.files[0];if(f&&pages.length)addImg(URL.createObjectURL(f));e.target.value=''};
 
 function remove(){if(!sel)return;
   if(sel.classList.contains('t')&&!sel.classList.contains('add')){sel.textContent='';sel._o.dirty=true;sel.style.background=`rgb(${sel._o.bg})`}
@@ -199,16 +240,28 @@ addEventListener('keydown',e=>{if(e.key==='Delete'&&!document.activeElement.isCo
 const hex=h=>{const n=parseInt(h.slice(1),16);return PDFLib.rgb((n>>16)/255,((n>>8)&255)/255,(n&255)/255)};
 const toRgb=s=>{const m=s.match(/\d+/g).map(Number);return PDFLib.rgb(m[0]/255,m[1]/255,m[2]/255)};
 
-$('save').onclick=async()=>{
-  if(!bytes)return alert('ابتدا یک PDF باز کنید.');
-  const b=$('save');b.textContent='در حال ذخیره…';
-  try{
+async function build0(){
     const doc=await PDFLib.PDFDocument.load(bytes.slice());doc.registerFontkit(fontkit);
     const cache={},gf=async k=>{k=k||'Vazirmatn';if(!cache[k]){try{cache[k]=await doc.embedFont(await(await fetch(FONTS[k])).arrayBuffer(),{subset:true})}catch(e){if(k==='Vazirmatn')throw e;return gf('Vazirmatn')}}return cache[k]};
+    const form=doc.getForm();
+    for(const[n,v]of Object.entries(fills)){try{const f=form.getField(n);
+      if(f instanceof PDFLib.PDFTextField)f.setText(v);else if(f instanceof PDFLib.PDFCheckBox)v?f.check():f.uncheck();else if(f.select)f.select(v)}catch(_){}}
     for(const pg of pages){
       const P=doc.getPage(pg.n-1),H=P.getHeight();
+      for(const s of pg.svg.children){const k=s.dataset.k;if(!k)continue;
+        const bx=+s.getAttribute('x')/S,bw=+s.getAttribute('width')/S,bh=+s.getAttribute('height')/S,by=H-(+s.getAttribute('y'))/S-bh;
+        if(k==='highlight')P.drawRectangle({x:bx,y:by,width:bw,height:bh,color:PDFLib.rgb(.98,.8,.08),opacity:.4});
+        else if(k==='link'){const u=s.dataset.u,t=/^\d+$/.test(u)&&+u>=1&&+u<=pages.length;
+          P.node.addAnnot(doc.context.register(doc.context.obj({Type:'Annot',Subtype:'Link',Rect:[bx,by,bx+bw,by+bh],Border:[0,0,0],...(t?{Dest:[doc.getPage(+u-1).ref,PDFLib.PDFName.of('Fit')]}:{A:{Type:'Action',S:'URI',URI:PDFLib.PDFString.of(u)}})})))}
+        else if(k==='ftext')form.createTextField(s.dataset.n).addToPage(P,{x:bx,y:by,width:bw,height:bh});
+        else if(k==='fcheck'){const z=Math.min(bw,bh);form.createCheckBox(s.dataset.n).addToPage(P,{x:bx,y:by,width:z,height:z})}
+        else if(k==='fdrop'){const dd=form.createDropdown(s.dataset.n);dd.addOptions(s.dataset.o.split(',').map(v=>v.trim()));dd.addToPage(P,{x:bx,y:by,width:bw,height:bh})}
+        else if(k==='poly'){for(const g of JSON.parse(s.dataset.pts||'[]'))P.drawLine({start:{x:g[0]/S,y:H-g[1]/S},end:{x:g[2]/S,y:H-g[3]/S},thickness:+s.getAttribute('stroke-width')/S,color:hex(s.getAttribute('stroke')),lineCap:PDFLib.LineCapStyle.Round})}
+        else if(k==='ellipse'){const f=s.getAttribute('fill')!=='none';P.drawEllipse({x:+s.getAttribute('cx')/S,y:H-s.getAttribute('cy')/S,xScale:+s.getAttribute('rx')/S,yScale:+s.getAttribute('ry')/S,borderColor:hex(s.getAttribute('stroke')),borderWidth:+s.getAttribute('stroke-width')/S,...(f?{color:hex(s.getAttribute('fill'))}:{})})}}
       for(const s of pg.svg.children)if(s.dataset.er)P.drawRectangle({x:s.getAttribute('x')/S,y:H-(+s.getAttribute('y')+ +s.getAttribute('height'))/S,width:s.getAttribute('width')/S,height:s.getAttribute('height')/S,color:toRgb(s.getAttribute('fill'))});
       for(const d of pg.L.children){
+        if(d.classList.contains('nt')){const nx=d.offsetLeft/S,ny=H-d.offsetTop/S;
+          P.node.addAnnot(doc.context.register(doc.context.obj({Type:'Annot',Subtype:'Text',Rect:[nx,ny-14,nx+14,ny],Contents:PDFLib.PDFHexString.fromText(d.dataset.msg),Name:'Comment',C:[1,.85,0],F:4})));continue}
         if(d.classList.contains('im')){
           const cv=el('canvas'),im=d.firstChild;cv.width=im.naturalWidth;cv.height=im.naturalHeight;
           cv.getContext('2d').drawImage(im,0,0);
@@ -217,25 +270,37 @@ $('save').onclick=async()=>{
         }else if(d.classList.contains('add')){
           const fs=parseFloat(d.style.fontSize)/S,font=await gf(d.dataset.f);
           d.innerText.split('\n').forEach((ln,i)=>{if(!ln.trim())return;
-            P.drawText(ln,{x:d.offsetLeft/S,y:H-(d.offsetTop/S+fs*(1+1.2*i)),size:fs,font,color:hex(d.dataset.c)})});
+            dt(P,ln,d.offsetLeft/S,H-(d.offsetTop/S+fs*(1+1.2*i)),fs,font,hex(d.dataset.c),d)});
         }else if(d._o&&d._o.dirty){
           const o=d._o,fs=o.fs/S,txt=d.textContent,font=await gf(d.dataset.f);
           P.drawRectangle({x:o.x/S-1,y:H-(o.y+o.fs*.3)/S,width:Math.max(o.w,d.offsetWidth)/S+2,height:o.fs*1.25/S,color:toRgb('rgb('+o.bg+')')});
           if(txt.trim()){const tw=font.widthOfTextAtSize(txt,fs);
-            for(const dx of o.bold?[0,fs*.03]:[0])P.drawText(txt,{x:(rtl(txt)?o.x/S+o.w/S-tw:o.x/S)+dx,y:H-o.y/S,size:fs,font,color:hex(d.dataset.c||'#000000')})}
+            dt(P,txt,rtl(txt)?o.x/S+o.w/S-tw:o.x/S,H-o.y/S,fs,font,hex(d.dataset.c||'#000000'),d)}
         }
       }
       for(const s of pg.svg.children){
-        if(s.dataset.er)continue;
+        if(s.dataset.er||s.dataset.k)continue;
         const c=hex(s.getAttribute('stroke')),lw=parseFloat(s.getAttribute('stroke-width'))/S;
         if(s.tagName==='line')P.drawLine({start:{x:s.getAttribute('x1')/S,y:H-s.getAttribute('y1')/S},end:{x:s.getAttribute('x2')/S,y:H-s.getAttribute('y2')/S},thickness:lw,color:c});
         else{const w=s.getAttribute('width')/S,h=s.getAttribute('height')/S,f=s.getAttribute('fill')!=='none';
           P.drawRectangle({x:s.getAttribute('x')/S,y:H-s.getAttribute('y')/S-h,width:w,height:h,borderColor:c,borderWidth:lw,...(f?{color:c}:{})})}
       }
     }
-    await dl(new Blob([await doc.save()],{type:'application/pdf'}),fname);
-  }catch(err){alert('خطا در ذخیره: '+err.message)}
-  b.textContent='خروجی PDF';
+    if(hf){const fo=await gf(),N=doc.getPageCount();doc.getPages().forEach((P,i)=>{const W=P.getWidth(),H=P.getHeight();
+      for(const[row,y]of[[hf.h,H-26],[hf.f,18]])row.forEach((t,k)=>{t=t.replace('{n}',i+1).replace('{N}',N);if(!t.trim())return;const w=fo.widthOfTextAtSize(t,10);
+        P.drawText(t,{x:k?(k===1?(W-w)/2:W-36-w):36,y,size:10,font:fo,color:PDFLib.rgb(.2,.2,.2)})})})}
+    try{if(form.getFields().length)form.updateFieldAppearances(await gf())}catch(_){}
+    if(marks.length){const c=doc.context,N=PDFLib.PDFName.of,it=marks.filter(m=>m.p<=doc.getPageCount()).map(m=>c.register(c.obj({Title:PDFLib.PDFHexString.fromText(m.t),Dest:[doc.getPage(m.p-1).ref,N('Fit')]})));
+      if(it.length){const root=c.register(c.obj({Type:'Outlines',Count:it.length}));
+        it.forEach((r,i)=>{const o=c.lookup(r);o.set(N('Parent'),root);if(i)o.set(N('Prev'),it[i-1]);if(i<it.length-1)o.set(N('Next'),it[i+1])});
+        const rd=c.lookup(root);rd.set(N('First'),it[0]);rd.set(N('Last'),it[it.length-1]);doc.catalog.set(N('Outlines'),root)}}
+    return await doc.save();
+}
+$('save').onclick=async()=>{
+  if(!bytes)return alert('ابتدا یک PDF باز کنید.');
+  const b=$('save');b.textContent='…';
+  try{await dl(new Blob([await build()],{type:'application/pdf'}),fname)}catch(err){alert('خطا در ذخیره: '+err.message)}
+  b.textContent='PDF';
 };
 
 async function dl(blob,name){
@@ -246,6 +311,150 @@ async function dl(blob,name){
     await C.Plugins.Share.share({title:name,url:w.uri,dialogTitle:'ذخیره یا اشتراک‌گذاری'});
   }else{const a=el('a');a.href=URL.createObjectURL(blob);a.download=name;a.click()}
 }
+function box(e,pg,cb){
+  const [x,y]=pos(e,pg),r=document.createElementNS(NS,'rect');let X=x,Y=y,W=0,H=0;
+  r.dataset.tmp=1;r.setAttribute('fill','#2563eb22');r.setAttribute('stroke','#2563eb');r.setAttribute('stroke-dasharray','5');pg.svg.append(r);
+  const mv=ev=>{const[a,b]=pos(ev,pg);X=Math.min(x,a);Y=Math.min(y,b);W=Math.abs(a-x);H=Math.abs(b-y);
+    r.setAttribute('x',X);r.setAttribute('y',Y);r.setAttribute('width',W);r.setAttribute('height',H)};
+  const up=()=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up);r.remove();setTool('select');if(W>6&&H>6)cb(X,Y,W,H)};
+  addEventListener('pointermove',mv);addEventListener('pointerup',up);mv(e);
+}
+function mkBox(pg,k,X,Y,W,H){
+  const r=document.createElementNS(NS,'rect');[X,Y,W,H].forEach((v,i)=>r.setAttribute(['x','y','width','height'][i],v));r.dataset.k=k;
+  r.onpointerdown=ev=>{if(tool==='select'){ev.stopPropagation();select(r)}};
+  if(k==='redact'){r.setAttribute('fill','#000');r.setAttribute('stroke','none');pg.svg.append(r);return}
+  if(k==='underline'||k==='strike'){const yy=k==='strike'?Y+H/2:Y+H,p=mkPoly(pg);p.dataset.pts=JSON.stringify([[X,yy,X+W,yy]]);p.setAttribute('d',`M${X} ${yy} L${X+W} ${yy}`);return}
+  if(k==='ellipse'){const e=document.createElementNS(NS,'ellipse'),c=$('col').value;e.dataset.k='ellipse';
+    [['cx',X+W/2],['cy',Y+H/2],['rx',W/2],['ry',H/2]].forEach(([a,v])=>e.setAttribute(a,v));
+    e.setAttribute('stroke',c);e.setAttribute('stroke-width',$('lw').value);e.setAttribute('fill',$('fill').checked?c:'none');
+    e.onpointerdown=ev=>{if(tool==='select'){ev.stopPropagation();select(e)}};pg.svg.append(e);return}
+  if(k==='highlight'){r.setAttribute('fill','#facc15');r.setAttribute('fill-opacity','.4');r.setAttribute('stroke','none')}
+  else{const c=k==='link'?'#2563eb':'#16a34a';r.setAttribute('fill',c+'22');r.setAttribute('stroke',c);r.setAttribute('stroke-dasharray','4');
+    if(k==='link'){const u=prompt('آدرس لینک (https://...) یا شمارهٔ صفحه');if(!u)return;r.dataset.u=u.trim()}
+    else{r.dataset.n='f'+Date.now().toString(36);if(k==='fdrop'){const o=prompt('گزینه‌ها را با ویرگول جدا کنید (مثلاً الف,ب,ج)');if(!o)return;r.dataset.o=o}}}
+  pg.svg.append(r);
+}
+function mkNote(pg,x,y,t){
+  const d=el('div','nt');d.textContent='💬';d.dataset.msg=t;
+  Object.assign(d.style,{position:'absolute',left:x+'px',top:y+'px',fontSize:'24px',pointerEvents:'auto',cursor:'move',textShadow:'0 0 3px #fff'});
+  d.onclick=()=>{if(tool==='select')alert(t)};drag(d);pg.L.append(d);
+}
+$('mm').onclick=()=>$('more').hidden=!$('more').hidden;
+$('more').addEventListener('click',e=>{if(e.target.closest('button'))$('more').hidden=true});
+$('mFind').onclick=()=>{
+  const f=prompt('جستجو:');if(!f)return;const r=prompt('جایگزین با (خالی = فقط پیدا کردن):');let n=0;
+  for(const pg of pages)for(const d of pg.L.children){
+    if(!d.classList.contains('t')||!d.textContent.includes(f))continue;n++;d.style.outline='2px solid #f59e0b';
+    if(r){d.textContent=d.textContent.split(f).join(r);touch(d)}}
+  alert(n+' مورد پیدا شد');
+};
+$('mMark').onclick=()=>{if(!pages.length)return;const t=prompt('عنوان نشانک برای این صفحه');if(t){marks.push({t,p:curPage().n});alert('نشانک ثبت شد')}};
+$('mPrint').onclick=async()=>{if(!bytes)return;try{await dl(new Blob([await build()],{type:'application/pdf'}),fname)}catch(e){alert(e.message)}};
+const sc=$('sc'),sx=sc.getContext('2d');let dn=false;sx.lineWidth=3;sx.lineCap='round';sx.strokeStyle='#1e3a8a';
+const sp=e=>{const r=sc.getBoundingClientRect();return[(e.clientX-r.left)*300/r.width,(e.clientY-r.top)*150/r.height]};
+sc.onpointerdown=e=>{dn=true;sx.beginPath();sx.moveTo(...sp(e))};
+sc.onpointermove=e=>{if(dn){sx.lineTo(...sp(e));sx.stroke()}};
+sc.onpointerup=()=>dn=false;
+$('sClr').onclick=()=>sx.clearRect(0,0,300,150);$('sX').onclick=()=>$('sig').hidden=true;
+$('sOk').onclick=()=>{if(pages.length)addImg(sc.toDataURL('image/png'));$('sig').hidden=true;sx.clearRect(0,0,300,150)};
+$('mSign').onclick=()=>$('sig').hidden=false;
+$('mForm').onclick=async()=>{
+  if(!bytes)return;const fl=(await PDFLib.PDFDocument.load(bytes.slice())).getForm().getFields();
+  if(!fl.length)return alert('این PDF فیلد فرم ندارد. با «فیلد متنی» و «چک‌باکس» فیلد بسازید.');
+  const L=$('frl');L.innerHTML='';
+  for(const f of fl){const n=f.getName(),r=el('label');r.textContent=n+' ';let i;
+    if(f instanceof PDFLib.PDFCheckBox){i=el('input');i.type='checkbox';i.checked=n in fills?!!fills[n]:f.isChecked();i.onchange=()=>fills[n]=i.checked}
+    else if(f instanceof PDFLib.PDFTextField){i=el('input');i.value=fills[n]??f.getText()??'';i.oninput=()=>fills[n]=i.value}
+    else if(f.getOptions){i=el('select');f.getOptions().forEach(o=>i.add(new Option(o,o)));i.value=fills[n]??([].concat(f.getSelected()||[])[0]||'');i.onchange=()=>fills[n]=i.value}
+    else continue;
+    r.append(i);L.append(r)}
+  $('frm').hidden=false;
+};
+async function pageOp(fn){const doc=await PDFLib.PDFDocument.load(await build());await fn(doc);bytes=await doc.save();hf=null;await load();pgList()}
+function pgList(){
+  const L=$('pgl');L.innerHTML='';
+  pages.forEach((pg,i)=>{const r=el('div','row'),c=el('canvas');c.width=44;c.height=Math.round(44*pg.ch/pg.cw);
+    c.getContext('2d').drawImage(pg.w.querySelector('canvas'),0,0,c.width,c.height);
+    const B=(t,f)=>{const x=el('button');x.textContent=t;x.onclick=()=>pageOp(f);return x};
+    r.append(c,Object.assign(el('b'),{textContent:'صفحه '+(i+1)}),
+      B('▲',async d=>{if(i){const p=d.getPage(i);d.removePage(i);d.insertPage(i-1,p)}}),
+      B('▼',async d=>{if(i<d.getPageCount()-1){const p=d.getPage(i);d.removePage(i);d.insertPage(i+1,p)}}),
+      B('↻',async d=>{const P=d.getPage(i),z=P.getSize(),emb=await d.embedPage(P),np=d.insertPage(i+1,[z.height,z.width]);np.drawPage(emb,{x:0,y:z.width,rotate:PDFLib.degrees(-90)});d.removePage(i)}),
+      B('➕',async d=>{const z=d.getPage(i).getSize();d.insertPage(i+1,[z.width,z.height])}),
+      B('🗑',async d=>{if(d.getPageCount()>1)d.removePage(i)}));
+    L.append(r)});
+}
+$('mPages').onclick=()=>{if(pages.length){pgList();$('pgm').hidden=false}};
+$('pgX').onclick=()=>$('pgm').hidden=true;
+$('pgAdd').onchange=async e=>{const f=e.target.files[0];if(!f)return;const buf=await f.arrayBuffer();
+  await pageOp(async d=>{const o=await PDFLib.PDFDocument.load(buf);(await d.copyPages(o,o.getPageIndices())).forEach(p=>d.addPage(p))});e.target.value=''};
+let hf=null;
+const hist=[];let undoing=false;
+function watch(pg){for(const t of [pg.L,pg.svg])new MutationObserver(ms=>{if(undoing)return;for(const m of ms){
+  m.addedNodes.forEach(n=>{if(n.nodeType===1&&!n.dataset.tmp)hist.push(()=>n.remove())});
+  m.removedNodes.forEach(n=>{if(n.nodeType===1&&!n.dataset.tmp)hist.push(()=>t.append(n))})}}).observe(t,{childList:true})}
+$('undo').onclick=()=>{
+  if(document.activeElement&&document.activeElement.isContentEditable)return document.execCommand('undo');
+  const f=hist.pop();if(f){undoing=true;f();setTimeout(()=>undoing=false,0)}};
+for(const[id,k,css,on,off]of[['bB','b','fontWeight','bold','normal'],['bI','i','fontStyle','italic','normal'],['bU','u','textDecoration','underline','none']])
+  $(id).onclick=()=>{if(!sel||!sel.classList.contains('t'))return;
+    if(sel.dataset[k]){delete sel.dataset[k];sel.style[css]=off}else{sel.dataset[k]=1;sel.style[css]=on}touch(sel)};
+const dt=(P,t,x,y,fs,font,col,d)=>{
+  const o={size:fs,font,color:col,...(d.dataset.i?{ySkew:PDFLib.degrees(12)}:{})};
+  for(const dx of d.dataset.b?[0,fs*.03]:[0])P.drawText(t,{...o,x:x+dx,y});
+  if(d.dataset.u){const w=font.widthOfTextAtSize(t,fs);P.drawLine({start:{x,y:y-fs*.15},end:{x:x+w,y:y-fs*.15},thickness:fs*.06,color:col})}};
+function mkPoly(pg){
+  const s=document.createElementNS(NS,'path');s.dataset.k='poly';
+  s.setAttribute('stroke',$('col').value);s.setAttribute('stroke-width',$('lw').value);s.setAttribute('fill','none');
+  s.setAttribute('stroke-linecap','round');s.setAttribute('stroke-linejoin','round');
+  s.onpointerdown=ev=>{if(tool==='select'){ev.stopPropagation();select(s)}};pg.svg.append(s);return s}
+function trace(e,pg,mode){
+  const [x,y]=pos(e,pg),s=mkPoly(pg),sg=[],lw=+$('lw').value;let lx=x,ly=y,d=`M${x} ${y}`;
+  const mv=ev=>{const[a,b]=pos(ev,pg);
+    if(mode==='ink'){sg.push([lx,ly,a,b]);lx=a;ly=b;d+=` L${a} ${b}`}
+    else{const t=Math.atan2(b-y,a-x),L=12+lw*2;sg.length=0;
+      sg.push([x,y,a,b],[a,b,a-L*Math.cos(t-.45),b-L*Math.sin(t-.45)],[a,b,a-L*Math.cos(t+.45),b-L*Math.sin(t+.45)]);
+      d=`M${x} ${y} L${a} ${b} M${sg[1][2]} ${sg[1][3]} L${a} ${b} L${sg[2][2]} ${sg[2][3]}`}
+    s.setAttribute('d',d);s.dataset.pts=JSON.stringify(sg)};
+  const up=()=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up);if(!sg.length)s.remove();if(mode==='arrow')setTool('select')};
+  addEventListener('pointermove',mv);addEventListener('pointerup',up)}
+function cropPage(pg,X,Y,W,H){pageOp(async d=>{const P=d.getPage(pg.n-1),h=P.getHeight(),x=X/S,y=h-(Y+H)/S,w=W/S,hh=H/S;
+  P.translateContent(-x,-y);P.setSize(w,hh);P.setCropBox(0,0,w,hh)})}
+async function build(){
+  const b=await build0(),R=[];
+  pages.forEach((pg,i)=>{const r=[...pg.svg.children].filter(s=>s.dataset.k==='redact').map(s=>['x','y','width','height'].map(a=>+s.getAttribute(a)));if(r.length)R.push([i,r])});
+  if(!R.length)return b;
+  const src=await pdfjsLib.getDocument({data:b.slice()}).promise,out=await PDFLib.PDFDocument.load(b);
+  for(const[i,rs]of R){
+    const p=await src.getPage(i+1),vp=p.getViewport({scale:2}),cv=el('canvas');cv.width=vp.width;cv.height=vp.height;
+    const cx=cv.getContext('2d');await p.render({canvasContext:cx,viewport:vp}).promise;cx.fillStyle='#000';
+    for(const[x,y,w,h]of rs)cx.fillRect(x*2/S,y*2/S,w*2/S,h*2/S);
+    const z=out.getPage(i).getSize(),im=await out.embedPng(cv.toDataURL('image/png')),np=out.insertPage(i+1,[z.width,z.height]);
+    np.drawImage(im,{x:0,y:0,width:z.width,height:z.height});out.removePage(i)}
+  return await out.save();
+}
+$('mHF').onclick=()=>{
+  const h=prompt('سرصفحه: چپ|وسط|راست (شمارهٔ صفحه: {n} و تعداد: {N})','||'),f=prompt('پاصفحه: چپ|وسط|راست','|{n}|');
+  if(h===null||f===null)return;hf={h:h.split('|'),f:f.split('|')};alert('هنگام ذخیره روی همهٔ صفحه‌ها اعمال می‌شود.')};
+$('mExt').onclick=async()=>{
+  if(!pages.length)return;const r=prompt('شمارهٔ صفحه‌ها، مثلاً 1-3,5');if(!r)return;
+  const src=await PDFLib.PDFDocument.load(await build()),N=src.getPageCount(),ix=[];
+  r.split(',').forEach(t=>{const[a,b]=t.split('-').map(Number);for(let k=a;k<=(b||a);k++)if(k>=1&&k<=N)ix.push(k-1)});
+  if(!ix.length)return alert('صفحه‌ای انتخاب نشد.');
+  const out=await PDFLib.PDFDocument.create();(await out.copyPages(src,ix)).forEach(p=>out.addPage(p));
+  await dl(new Blob([await out.save()],{type:'application/pdf'}),fname.replace('.pdf','-extract.pdf'))};
+$('mComp').onclick=async()=>{
+  if(!pages.length)return;const q=+prompt('کیفیت (۱۰ تا ۹۰). متن به تصویر تبدیل می‌شود.','60');if(!q)return;
+  const b=await build(),sd=await pdfjsLib.getDocument({data:b.slice()}).promise,out=await PDFLib.PDFDocument.create();
+  for(let n=1;n<=sd.numPages;n++){const p=await sd.getPage(n),v1=p.getViewport({scale:1}),vp=p.getViewport({scale:1.3}),cv=el('canvas');
+    cv.width=vp.width;cv.height=vp.height;await p.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+    const im=await out.embedJpg(cv.toDataURL('image/jpeg',q/100));out.addPage([v1.width,v1.height]).drawImage(im,{x:0,y:0,width:v1.width,height:v1.height})}
+  const o=await out.save();alert(`قبل: ${(b.length/1048576).toFixed(1)} MB — بعد: ${(o.length/1048576).toFixed(1)} MB`);
+  await dl(new Blob([o],{type:'application/pdf'}),fname.replace('.pdf','-small.pdf'))};
+$('mImg').onclick=async()=>{
+  if(!pages.length)return;const n=curPage().n,sd=await pdfjsLib.getDocument({data:(await build()).slice()}).promise,p=await sd.getPage(n),vp=p.getViewport({scale:2}),cv=el('canvas');
+  cv.width=vp.width;cv.height=vp.height;await p.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+  await dl(await new Promise(r=>cv.toBlob(r)),fname.replace(/\.pdf$/i,'')+'-p'+n+'.png')};
 let ocrW;
 $('ocr').onclick=async()=>{
   if(!bytes)return alert('ابتدا یک PDF باز کنید.');
@@ -269,6 +478,7 @@ $('ocr').onclick=async()=>{
 function wordLines(pg){
   const E=[];
   for(const d of pg.L.children){
+    if(d.classList.contains('nt'))continue;
     if(d.classList.contains('im')){E.push({top:d.offsetTop,im:d});continue}
     const t=d.innerText.trim();if(!t)continue;
     E.push({top:d.offsetTop,left:d.offsetLeft,t,fs:parseFloat(d.style.fontSize),f:d.dataset.f||'Vazirmatn',c:(d.dataset.c||'#000000').slice(1)});
