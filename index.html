@@ -291,12 +291,12 @@ const toRgb=s=>{const m=s.match(/\d+/g).map(Number);return PDFLib.rgb(m[0]/255,m
 
 async function build0(){
     const doc=await PDFLib.PDFDocument.load(bytes.slice());doc.registerFontkit(fontkit);
-    const cache={},gf=async k=>{k=k||'Vazirmatn';if(!cache[k]){try{cache[k]=await doc.embedFont(await(await fetch(FONTS[k])).arrayBuffer(),{subset:true})}catch(e){if(k==='Vazirmatn')throw e;return gf('Vazirmatn')}}return cache[k]};
+    const cache={},gf=async k=>{k=k||'Vazirmatn';if(!cache[k]){try{cache[k]=fixRtl(await doc.embedFont(await(await fetch(FONTS[k])).arrayBuffer(),{subset:true}))}catch(e){if(k==='Vazirmatn')throw e;return gf('Vazirmatn')}}return cache[k]};
     const form=doc.getForm();
     const oc={},gfe=async(d,t)=>{d._fb=false;if(d.dataset.f!=='orig')return gf(d.dataset.f);
       const k=d.dataset.of,fd=FD[k],fb=()=>{d._fb=true;return gf(matchFont(d.dataset.nm)||'Vazirmatn')};if(!fd)return fb();
-      try{if(!oc[k])oc[k]=await doc.embedFont(fd,{subset:true});const fe=oc[k],ft=fe.embedder&&fe.embedder.font;
-        if(ft&&[...t].every(c=>/\s/.test(c)||ft.hasGlyphForCodePoint(c.codePointAt(0))))return fe}catch(_){}
+      try{if(!oc[k])oc[k]=fixRtl(await doc.embedFont(fd,{subset:true}));const fe=oc[k],ft=fe.embedder&&fe.embedder.font;
+        if(ft&&(!ARB.test(t)||(ft.availableFeatures||[]).some(f=>f==='init'||f==='medi'||f==='fina'))&&[...t].every(c=>/\s/.test(c)||ft.hasGlyphForCodePoint(c.codePointAt(0))))return fe}catch(_){}
       return fb()};
     for(const[n,v]of Object.entries(fills)){try{const f=form.getField(n);
       if(f instanceof PDFLib.PDFTextField)f.setText(v);else if(f instanceof PDFLib.PDFCheckBox)v?f.check():f.uncheck();else if(f.select)f.select(v)}catch(_){}}
@@ -517,6 +517,26 @@ const stepH=(from,to,k)=>{if(document.activeElement&&document.activeElement.blur
 $('undo').onclick=()=>stepH(hist,redoS,'u');$('redo').onclick=()=>stepH(redoS,hist,'r');
 for(const[id,k,css,on,off]of[['bB','b','fontWeight','bold','normal'],['bI','i','fontStyle','italic','normal'],['bU','u','textDecoration','underline','none']])
   $(id).onclick=()=>chg(d=>{if(d.dataset[k]){delete d.dataset[k];d.style[css]=off}else{d.dataset[k]=1;d.style[css]=on}});
+const ARB=/[\u0590-\u08FF\uFB1D-\uFEFF]/;
+const MIR={0x28:0x29,0x29:0x28,0x5B:0x5D,0x5D:0x5B,0x7B:0x7D,0x7D:0x7B,0x3C:0x3E,0x3E:0x3C,0xAB:0xBB,0xBB:0xAB};
+function visualOrder(g,ft){
+  const cls=x=>{const c=(x.codePoints&&x.codePoints[0])||0;
+    if((c>=0x30&&c<=0x39)||(c>=0x660&&c<=0x669)||(c>=0x6F0&&c<=0x6F9))return 'D';
+    if((c>=0x41&&c<=0x5A)||(c>=0x61&&c<=0x7A)||(c>=0xC0&&c<=0x24F))return 'L';
+    if((c>=0x590&&c<=0x8FF)||(c>=0xFB1D&&c<=0xFEFF))return 'R';return 'N'};
+  let t=g.map(cls);if(!t.includes('R'))return g;
+  const base=t.find(x=>x==='R'||x==='L')||'R';t=t.map(x=>x==='D'?'L':x);const ty=t.slice();
+  for(let i=0;i<ty.length;i++)if(ty[i]==='N'){let a=i-1;while(a>=0&&t[a]==='N')a--;let b=i+1;while(b<t.length&&t[b]==='N')b++;
+    const pa=a>=0?t[a]:base,pb=b<t.length?t[b]:base;ty[i]=pa===pb?pa:base}
+  const runs=[];ty.forEach((x,i)=>{let gl=g[i];
+    if(x==='R'&&t[i]==='N'){const c=gl.codePoints&&gl.codePoints[0];if(MIR[c]){try{gl=ft.glyphForCodePoint(MIR[c])}catch(_){}}}
+    const r=runs[runs.length-1];if(r&&r.t===x)r.g.push(gl);else runs.push({t:x,g:[gl]})});
+  const out=runs.map(r=>r.t==='R'?r.g.slice().reverse():r.g);if(base==='R')out.reverse();return out.flat()}
+function fixRtl(f){const ft=f&&f.embedder&&f.embedder.font;if(!ft||ft._fx)return f;ft._fx=1;const ol=ft.layout.bind(ft);
+  ft.layout=function(t,...a){const r=ol(t,...a),g=r.glyphs;
+    if(g&&g.length>1&&ARB.test(t)){const cs=[...t],c0=g[0].codePoints&&g[0].codePoints[0];
+      if(c0===undefined||c0===cs[0].codePointAt(0)||c0!==cs[cs.length-1].codePointAt(0))r.glyphs=visualOrder(g,ft)}
+    return r};return f}
 const dt=(P,t,x,y,fs,font,col,d)=>{
   const I=d.dataset.i||(d._fb&&d.dataset.oi),B=d.dataset.b||(d._fb&&d.dataset.ob),o={size:fs,font,color:col,...(I?{ySkew:PDFLib.degrees(12)}:{})};
   for(const dx of B?[0,fs*.03]:[0])P.drawText(t,{...o,x:x+dx,y});
