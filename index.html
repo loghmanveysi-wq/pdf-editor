@@ -2,7 +2,7 @@
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
 <title>ویرایشگر PDF</title>
 <style>
 @font-face{font-family:V;src:url(./fonts/Vazirmatn.ttf)}
@@ -79,6 +79,11 @@ body.ctx #props{display:flex}
 #zw,#pages{direction:ltr}
 body:not(.zoomed){overflow-x:hidden}
 .pg{margin:8px 0}
+html,body{touch-action:pan-x pan-y}
+#hd,#dock,#zm{transform:translateZ(0);will-change:transform}
+body.tt .t{pointer-events:auto}
+body.mv .t,body.mv .im,body.mv .nt{pointer-events:auto;touch-action:none;-webkit-user-select:none;user-select:none}
+#esz,#eszl{display:none}body.er #esz,body.er #eszl{display:inline-block}
 </style>
 </head>
 <body>
@@ -88,10 +93,11 @@ body:not(.zoomed){overflow-x:hidden}
   <button id="undo">↩</button><button id="redo">↪</button><button id="ocr">🔍 OCR</button><button id="save">PDF</button><button id="word">Word</button></header>
 <div id="props"><select id="font" title="فونت"></select><input id="col" type="color" value="#000000" title="رنگ">
   <span>اندازه</span><input id="sz" type="number" value="14" min="4"><span>ضخامت</span><input id="lw" type="number" value="2" min="1">
-  <label><input id="fill" type="checkbox"> پر</label><button id="bB"><b>B</b></button><button id="bI"><i>I</i></button><button id="bU"><u>U</u></button></div>
+  <label><input id="fill" type="checkbox"> پر</label><button id="bB"><b>B</b></button><button id="bI"><i>I</i></button><button id="bU"><u>U</u></button><span id="eszl">اندازهٔ پاک‌کن</span><input id="esz" type="range" min="6" max="120" value="28"></div>
 </div>
 <nav id="dock">
   <button data-t="select" class="on"><span>👆</span>انتخاب</button>
+  <button data-t="move"><span>✥</span>جابه‌جایی</button>
   <button data-t="text"><span>✏️</span>متن</button>
   <button data-t="line"><span>╱</span>خط</button>
   <button data-t="rect"><span>▭</span>مستطیل</button>
@@ -148,10 +154,10 @@ let bytes,fname='edited.pdf',pages=[],tool='select',sel=null,fills={},marks=[];
 const el=(t,c)=>{const e=document.createElement(t);if(c)e.className=c;return e};
 const rtl=s=>/[\u0590-\u08FF]/.test(s);
 
-function setTool(t){tool=t;ctxUp();$('more').hidden=true;document.body.classList.toggle('draw',t!=='select');
+function setTool(t){tool=t;ctxUp();$('more').hidden=true;{const B=document.body.classList;B.toggle('draw',t!=='select'&&t!=='move');B.toggle('mv',t==='move');B.toggle('tt',t==='text');B.toggle('er',t==='erase');document.querySelectorAll('.t').forEach(d=>d.contentEditable=t!=='move')}
   document.querySelectorAll('[data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t===t))}
 document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>setTool(b.dataset.t));
-let Z=1;
+let Z=1,multi=false;
 function select(e){if(sel)sel.classList.remove('sel');sel=e;if(e)e.classList.add('sel');place();ctxUp();
   if(e&&e.classList.contains('t')){$('col').value=e.dataset.c||'#000000';
     const f=e.dataset.f;$('font').value=[...$('font').options].some(o=>o.value===f)?f:'Vazirmatn';
@@ -203,13 +209,14 @@ function mkItem(pg,o){
 }
 function pos(e,pg){const r=pg.w.getBoundingClientRect();return[(e.clientX-r.left)/Z,(e.clientY-r.top)/Z]}
 function draw(e,pg){
+  if(tool==='move'){const t=e.target.closest&&e.target.closest('.t:not(.add)');if(t){e.preventDefault();select(t);moveBy(t,e)}return}
   if(tool==='select'){if(e.target===pg.w||e.target.tagName==='CANVAS')select(null);return}
   if(tool==='erase'){e.preventDefault();return erase(e,pg)}
   const [x,y]=pos(e,pg),c=$('col').value;
-  if(tool==='note'){e.preventDefault();const t=prompt('متن یادداشت');if(t)mkNote(pg,x,y,t);setTool('select');return}
+  if(tool==='note'){e.preventDefault();const t=prompt('متن یادداشت');if(t)mkNote(pg,x,y,t);return}
   if(tool==='ink'||tool==='arrow'){e.preventDefault();return trace(e,pg,tool)}
   if(['link','ftext','fcheck','fdrop','highlight','underline','strike','redact','crop','ellipse'].includes(tool)){e.preventDefault();const k=tool;return box(e,pg,(X,Y,W,H)=>k==='crop'?cropPage(pg,X,Y,W,H):mkBox(pg,k,X,Y,W,H))}
-  if(tool==='text'){e.preventDefault();addText(pg,x,y,'متن');setTool('select');return}
+  if(tool==='text'){if(e.target.closest&&e.target.closest('.t'))return;e.preventDefault();addText(pg,x,y,'متن');return}
   const s=document.createElementNS(NS,tool==='line'?'line':'rect');
   s.setAttribute('stroke',c);s.setAttribute('stroke-width',$('lw').value);
   s.setAttribute('fill',tool==='rect'&&$('fill').checked?c:'none');
@@ -219,29 +226,34 @@ function draw(e,pg){
     if(k==='line'){s.setAttribute('x1',x);s.setAttribute('y1',y);s.setAttribute('x2',a);s.setAttribute('y2',b)}
     else{s.setAttribute('x',Math.min(x,a));s.setAttribute('y',Math.min(y,b));s.setAttribute('width',Math.abs(a-x));s.setAttribute('height',Math.abs(b-y))}};
   const up=()=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up);
-    const bb=s.getBBox();if(bb.width+bb.height<6)s.remove();setTool('select')};
+    const bb=s.getBBox();if(bb.width+bb.height<6)s.remove()};
   addEventListener('pointermove',mv);addEventListener('pointerup',up);mv(e);
 }
 
 function erase(e,pg){
-  const [x,y]=pos(e,pg),r=document.createElementNS(NS,'rect');
-  r.dataset.tmp=1;r.setAttribute('fill','#e11d4822');r.setAttribute('stroke','#e11d48');r.setAttribute('stroke-dasharray','5');pg.svg.append(r);
-  let X=x,Y=y,W=0,H=0;
-  const mv=ev=>{const[a,b]=pos(ev,pg);X=Math.min(x,a);Y=Math.min(y,b);W=Math.abs(a-x);H=Math.abs(b-y);
-    r.setAttribute('x',X);r.setAttribute('y',Y);r.setAttribute('width',W);r.setAttribute('height',H)};
-  const up=()=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up);r.remove();setTool('select');
-    if(W<4||H<4)return;
-    const hit=(l,t,w,h)=>l<X+W&&l+w>X&&t<Y+H&&t+h>Y;
-    for(const d of [...pg.L.children]){if(!hit(d.offsetLeft,d.offsetTop,d.offsetWidth,d.offsetHeight))continue;
-      if(!d._o)d.remove();
-      else{const b=snap(d);d.textContent='';dirty(d);rec(d,b,snap(d))}}
-    for(const s of [...pg.svg.children]){if(s.dataset.er)continue;const b=s.getBBox();if(hit(b.x,b.y,b.width,b.height))s.remove()}
-    if(H<=90){const c=document.createElementNS(NS,'image');setImg(c,inpaint(pg.ctx,pg.cw,pg.ch,X,Y,W,H));c.dataset.tmp='';delete c.dataset.tmp;pg.svg.append(c);return}
-    const cl=(v,m)=>Math.max(0,Math.min(m-1,Math.round(v))),px=pg.ctx.getImageData(cl(X-2,pg.cw),cl(Y-2,pg.ch),1,1).data;
-    const c=document.createElementNS(NS,'rect');c.dataset.er=1;c.style.pointerEvents='none';
-    c.setAttribute('x',X);c.setAttribute('y',Y);c.setAttribute('width',W);c.setAttribute('height',H);
-    c.setAttribute('fill',`rgb(${px[0]},${px[1]},${px[2]})`);pg.svg.append(c)};
-  addEventListener('pointermove',mv);addEventListener('pointerup',up);mv(e);
+  const r=+$('esz').value/2,pts=[],g=document.createElementNS(NS,'g');g.dataset.erb=1;g.dataset.tmp=1;g.style.pointerEvents='none';pg.svg.append(g);
+  const cl=(v,m)=>Math.max(0,Math.min(m-1,Math.round(v))),ds=r*1.1+3,ring=[[1,0],[-1,0],[0,1],[0,-1],[.7,.7],[-.7,.7],[.7,-.7],[-.7,-.7]];
+  const bgAt=(x,y)=>{const cs=ring.map(([a,b])=>{const p=pg.ctx.getImageData(cl(x+a*ds,pg.cw),cl(y+b*ds,pg.ch),1,1).data;return[p[0],p[1],p[2]]});
+    return[0,1,2].map(i=>cs.map(c=>c[i]).sort((a,b)=>a-b)[4])};
+  let last=null;const step=Math.max(2,r*.45);
+  const dab=(x,y)=>{const c=document.createElementNS(NS,'circle');c.setAttribute('cx',x);c.setAttribute('cy',y);c.setAttribute('r',r);
+    c.setAttribute('fill',`rgb(${bgAt(x,y)})`);g.append(c);pts.push([x,y])};
+  const to=(x,y)=>{if(!last){last=[x,y];dab(x,y);return}let d=Math.hypot(x-last[0],y-last[1]);
+    while(d>=step){const k=step/d;last=[last[0]+(x-last[0])*k,last[1]+(y-last[1])*k];dab(last[0],last[1]);d=Math.hypot(x-last[0],y-last[1])}};
+  const mv=ev=>{if(!multi)to(...pos(ev,pg))};
+  const up=()=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up);
+    if(!pts.length){g.remove();return}
+    const near=(l,t,w,h)=>pts.some(([px,py])=>Math.hypot(Math.max(l-px,0,px-(l+w)),Math.max(t-py,0,py-(t+h)))<=r);
+    const sn=[],rm=[];undoing=true;
+    for(const d of [...pg.L.children]){if(d.dataset.tmp||!near(d.offsetLeft,d.offsetTop,d.offsetWidth,d.offsetHeight))continue;
+      if(d._o){if(d.textContent){const b=snap(d);d.textContent='';dirty(d);sn.push([d,b,snap(d)])}}
+      else{rm.push([d,pg.L]);d.remove()}}
+    for(const x of [...pg.svg.children]){if(x===g||x.dataset.er||x.dataset.erb)continue;const b=x.getBBox();
+      if(b.width*b.height<40000&&near(b.x,b.y,b.width,b.height)){rm.push([x,pg.svg]);x.remove()}}
+    setTimeout(()=>undoing=false,0);
+    hist.push({u(){g.remove();sn.forEach(([d,b])=>restore(d,b));rm.forEach(([n,p])=>p.append(n))},
+      r(){pg.svg.append(g);sn.forEach(([d,,a])=>restore(d,a));rm.forEach(([n])=>n.remove())}});redoS.length=0};
+  addEventListener('pointermove',mv);addEventListener('pointerup',up);to(...pos(e,pg));
 }
 const touch=d=>{if(d._o)dirty(d)};
 $('font').onchange=()=>chg(d=>{const k=$('font').value;
@@ -253,7 +265,7 @@ const mh=el('div');mh.id='mh';mh.textContent='✥';mh.dataset.tmp=1;
 function place(){
   if(!sel||!sel.parentNode||!['t','im','nt'].some(c=>sel.classList.contains(c))){mh.remove();return}
   if(mh.parentNode!==sel.parentNode)sel.parentNode.append(mh);
-  const z=30/Z;Object.assign(mh.style,{width:z+'px',height:z+'px',lineHeight:z+'px',fontSize:z*.6+'px',left:sel.offsetLeft-z*.9+'px',top:sel.offsetTop-z*.9+'px'})}
+  const z=46/Z;Object.assign(mh.style,{width:z+'px',height:z+'px',lineHeight:z+'px',fontSize:z*.6+'px',left:sel.offsetLeft-z*.9+'px',top:sel.offsetTop-z*.9+'px'})}
 function moveBy(d,e,done){
   const b=snap(d),sx=e.clientX,sy=e.clientY,l0=d.offsetLeft,t0=d.offsetTop;
   const mv=ev=>{d.style.left=l0+(ev.clientX-sx)/Z+'px';d.style.top=t0+(ev.clientY-sy)/Z+'px';place()};
@@ -316,6 +328,7 @@ async function build0(){
         const ex=+s.getAttribute('x')/S,ew=+s.getAttribute('width')/S,eh=+s.getAttribute('height')/S,ey=H-(+s.getAttribute('y'))/S-eh;
         if(s.dataset.pimg)P.drawImage(await doc.embedPng(s.dataset.pimg),{x:ex,y:ey,width:ew,height:eh});
         else P.drawRectangle({x:ex,y:ey,width:ew,height:eh,color:toRgb(s.getAttribute('fill'))})}
+      for(const g of pg.svg.children)if(g.dataset.erb)for(const c of g.children)P.drawCircle({x:+c.getAttribute('cx')/S,y:H-(+c.getAttribute('cy'))/S,size:+c.getAttribute('r')/S,color:toRgb(c.getAttribute('fill'))});
       for(const d of pg.L.children){
         if(d.classList.contains('nt')){const nx=d.offsetLeft/S,ny=H-d.offsetTop/S;
           P.node.addAnnot(doc.context.register(doc.context.obj({Type:'Annot',Subtype:'Text',Rect:[nx,ny-14,nx+14,ny],Contents:PDFLib.PDFHexString.fromText(d.dataset.msg),Name:'Comment',C:[1,.85,0],F:4})));continue}
@@ -336,7 +349,7 @@ async function build0(){
         }
       }
       for(const s of pg.svg.children){
-        if(s.dataset.er||s.dataset.k)continue;
+        if(s.dataset.er||s.dataset.erb||s.dataset.k)continue;
         const c=hex(s.getAttribute('stroke')),lw=parseFloat(s.getAttribute('stroke-width'))/S;
         if(s.tagName==='line')P.drawLine({start:{x:s.getAttribute('x1')/S,y:H-s.getAttribute('y1')/S},end:{x:s.getAttribute('x2')/S,y:H-s.getAttribute('y2')/S},thickness:lw,color:c});
         else{const w=s.getAttribute('width')/S,h=s.getAttribute('height')/S,f=s.getAttribute('fill')!=='none';
@@ -373,7 +386,7 @@ function box(e,pg,cb){
   r.dataset.tmp=1;r.setAttribute('fill','#2563eb22');r.setAttribute('stroke','#2563eb');r.setAttribute('stroke-dasharray','5');pg.svg.append(r);
   const mv=ev=>{const[a,b]=pos(ev,pg);X=Math.min(x,a);Y=Math.min(y,b);W=Math.abs(a-x);H=Math.abs(b-y);
     r.setAttribute('x',X);r.setAttribute('y',Y);r.setAttribute('width',W);r.setAttribute('height',H)};
-  const up=()=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up);r.remove();setTool('select');if(W>6&&H>6)cb(X,Y,W,H)};
+  const up=()=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up);r.remove();if(W>6&&H>6)cb(X,Y,W,H)};
   addEventListener('pointermove',mv);addEventListener('pointerup',up);mv(e);
 }
 function mkBox(pg,k,X,Y,W,H){
@@ -457,7 +470,7 @@ idb().then(d=>{const o=d.transaction('f').objectStore('f'),ks=o.getAllKeys(),vs=
 $('fontFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;const buf=await f.arrayBuffer(),k=f.name.replace(/\.[^.]+$/,'');
   addFont(k,URL.createObjectURL(new Blob([buf])));try{(await idb()).transaction('f','readwrite').objectStore('f').put(buf,k)}catch(_){}
   $('font').value=k;alert('فونت «'+k+'» اضافه شد و در برنامه می‌ماند.');e.target.value=''};
-function ctxUp(){document.body.classList.toggle('ctx',!!sel||['text','line','rect','ellipse','ink','arrow','highlight','underline','strike'].includes(tool))}
+function ctxUp(){document.body.classList.toggle('ctx',!!sel||['text','line','rect','ellipse','ink','arrow','highlight','underline','strike','erase'].includes(tool))}
 function applyZ(){const p=$('pages'),mw=Math.max(0,...pages.map(g=>g.cw)),cw=document.documentElement.clientWidth;
   p.style.width=Math.max(mw,cw/Z)+'px';p.style.transform=`scale(${Z})`;
   $('zw').style.width=p.offsetWidth*Z+'px';$('zw').style.height=p.offsetHeight*Z+'px';
@@ -466,11 +479,13 @@ function setZoom(z,cx,cy){z=Math.max(.25,Math.min(4,z));cx=cx==null?innerWidth/2
   const px=(scrollX+cx)/Z,py=(scrollY+cy)/Z;Z=z;applyZ();scrollTo(px*Z-cx,py*Z-cy)}
 function fit(){if(pages.length){Z=1;setZoom(document.documentElement.clientWidth/Math.max(...pages.map(g=>g.cw)),0,0);scrollTo(0,0)}}
 $('zin').onclick=()=>setZoom(Z*1.25);$('zout').onclick=()=>setZoom(Z/1.25);$('zfit').onclick=fit;
-{let d0=0,z0=1;const dist=e=>Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY),zw=$('zw');
- zw.addEventListener('touchstart',e=>{if(e.touches.length===2){d0=dist(e);z0=Z}},{passive:true});
- zw.addEventListener('touchmove',e=>{if(e.touches.length===2&&d0){e.preventDefault();
-   setZoom(z0*dist(e)/d0,(e.touches[0].clientX+e.touches[1].clientX)/2,(e.touches[0].clientY+e.touches[1].clientY)/2)}},{passive:false});
- zw.addEventListener('touchend',()=>{d0=0},{passive:true})}
+{let d0=0,z0=1,ax=0,ay=0;const zw=$('zw'),
+   mid=e=>[(e.touches[0].clientX+e.touches[1].clientX)/2,(e.touches[0].clientY+e.touches[1].clientY)/2],
+   dist=e=>Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+ zw.addEventListener('touchstart',e=>{multi=e.touches.length>=2;if(multi){d0=dist(e);z0=Z;const[cx,cy]=mid(e);ax=(scrollX+cx)/Z;ay=(scrollY+cy)/Z}},{passive:true});
+ zw.addEventListener('touchmove',e=>{if(e.touches.length===2&&d0){e.preventDefault();const[cx,cy]=mid(e);
+   Z=Math.max(.25,Math.min(4,z0*dist(e)/d0));applyZ();scrollTo(ax*Z-cx,ay*Z-cy)}},{passive:false});
+ zw.addEventListener('touchend',e=>{multi=e.touches.length>=2;if(!multi)d0=0},{passive:true})}
 const EMPTY=$('empty'),sheets=[...document.querySelectorAll('.sheet')];
 const closeSheets=()=>sheets.forEach(x=>x.hidden=true);
 for(const sh of sheets){const x=el('button');x.className='xs';x.textContent='✕';x.onclick=closeSheets;sh.prepend(x);
@@ -554,7 +569,7 @@ function trace(e,pg,mode){
       sg.push([x,y,a,b],[a,b,a-L*Math.cos(t-.45),b-L*Math.sin(t-.45)],[a,b,a-L*Math.cos(t+.45),b-L*Math.sin(t+.45)]);
       d=`M${x} ${y} L${a} ${b} M${sg[1][2]} ${sg[1][3]} L${a} ${b} L${sg[2][2]} ${sg[2][3]}`}
     s.setAttribute('d',d);s.dataset.pts=JSON.stringify(sg)};
-  const up=()=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up);if(!sg.length)s.remove();if(mode==='arrow')setTool('select')};
+  const up=()=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up);if(!sg.length)s.remove()};
   addEventListener('pointermove',mv);addEventListener('pointerup',up)}
 function cropPage(pg,X,Y,W,H){pageOp(async d=>{const P=d.getPage(pg.n-1),h=P.getHeight(),x=X/S,y=h-(Y+H)/S,w=W/S,hh=H/S;
   P.translateContent(-x,-y);P.setSize(w,hh);P.setCropBox(0,0,w,hh)})}
