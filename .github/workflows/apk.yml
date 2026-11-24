@@ -41,6 +41,17 @@ jobs:
           curl -fsSL -o Samim.ttf $G/samim-font/dist/Samim.ttf || true
           curl -fsSL -o Parastoo.ttf $G/parastoo-font/dist/Parastoo.ttf || true
           curl -fsSL -o Gandom.ttf $G/gandom-font/dist/Gandom.ttf || true
+          curl -fsSL -o Tanha.ttf $G/tanha-font/dist/Tanha.ttf || true
+          GF=https://cdn.jsdelivr.net/gh/google/fonts@main/ofl
+          curl -fsSL -o Amiri.ttf $GF/amiri/Amiri-Regular.ttf || true
+          curl -fsSL -o Lalezar.ttf $GF/lalezar/Lalezar-Regular.ttf || true
+          curl -fsSL -o Tajawal.ttf $GF/tajawal/Tajawal-Regular.ttf || true
+          curl -fsSL -o Lateef.ttf $GF/lateef/Lateef-Regular.ttf || true
+          curl -fsSL -o ScheherazadeNew.ttf $GF/scheherazadenew/ScheherazadeNew-Regular.ttf || true
+          curl -fsSL -o NotoNaskh.ttf "$GF/notonaskharabic/NotoNaskhArabic%5Bwght%5D.ttf" || true
+          mkdir -p user
+          cp ../../myfonts/*.ttf ../../myfonts/*.otf user/ 2>/dev/null || true
+          (cd user && ls | grep -iE '\.(ttf|otf)$' | python3 -c "import sys,json;print(json.dumps([l.rstrip('\n') for l in sys.stdin]))" > fonts.json) || echo '[]' > user/fonts.json
       - run: npx cap add android && npx cap sync android
       - run: cd android && chmod +x gradlew && ./gradlew assembleDebug
       - uses: actions/upload-artifact@v4
