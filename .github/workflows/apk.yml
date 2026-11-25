@@ -6,6 +6,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -20,6 +22,7 @@ jobs:
         run: |
           mkdir -p www/lib www/fonts
           cp index.html www/
+          sed -i "s#__REPO__#${GITHUB_REPOSITORY}#;s#__VER__#${GITHUB_RUN_NUMBER}#" www/index.html
           mkdir -p www/ocr
           cp node_modules/tesseract.js/dist/tesseract.min.js www/lib/
           cp node_modules/tesseract.js/dist/worker.min.js www/ocr/
@@ -53,8 +56,23 @@ jobs:
           cp ../../myfonts/*.ttf ../../myfonts/*.otf user/ 2>/dev/null || true
           (cd user && ls | grep -iE '\.(ttf|otf)$' | python3 -c "import sys,json;print(json.dumps([l.rstrip('\n') for l in sys.stdin]))" > fonts.json) || echo '[]' > user/fonts.json
       - run: npx cap add android && npx cap sync android
-      - run: cd android && chmod +x gradlew && ./gradlew assembleDebug
+      - name: Version and signing
+        run: |
+          sed -i "s/versionCode 1/versionCode ${GITHUB_RUN_NUMBER}/;s/versionName \"1.0\"/versionName \"1.${GITHUB_RUN_NUMBER}\"/" android/app/build.gradle
+          python3 - <<'E'
+          p='android/app/build.gradle'
+          s=open(p).read()
+          s=s.replace('android {','android {\n    signingConfigs {\n        release {\n            storeFile file(System.getenv("GITHUB_WORKSPACE") + "/app.keystore")\n            storePassword "pdfeditor123"\n            keyAlias "pdfeditor"\n            keyPassword "pdfeditor123"\n        }\n    }',1)
+          s=s.replace('buildTypes {\n        release {','buildTypes {\n        release {\n            signingConfig signingConfigs.release',1)
+          open(p,'w').write(s)
+          E
+      - run: cd android && chmod +x gradlew && ./gradlew assembleRelease
       - uses: actions/upload-artifact@v4
         with:
           name: pdf-editor-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: نسخه ${{ github.run_number }}
+          files: android/app/build/outputs/apk/release/app-release.apk
