@@ -28,8 +28,8 @@ jobs:
           cp node_modules/tesseract.js/dist/worker.min.js www/ocr/
           cp node_modules/tesseract.js-core/tesseract-core*.js www/ocr/
           cp node_modules/tesseract.js-core/*.wasm www/ocr/ 2>/dev/null || true
-          curl -fsSL -o www/ocr/fas.traineddata https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/main/fas.traineddata
-          curl -fsSL -o www/ocr/eng.traineddata https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/main/eng.traineddata
+          curl -fsSL -o www/ocr/fas.traineddata https://raw.githubusercontent.com/tesseract-ocr/tessdata_best/main/fas.traineddata
+          curl -fsSL -o www/ocr/eng.traineddata https://raw.githubusercontent.com/tesseract-ocr/tessdata_best/main/eng.traineddata
           cd www/lib
           curl -fsSL -o pdf.min.js https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js
           curl -fsSL -o pdf.worker.min.js https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js
