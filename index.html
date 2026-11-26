@@ -90,6 +90,11 @@ body.mv .t,body.mv .im,body.mv .nt{pointer-events:auto;touch-action:none;-webkit
 #pal i{width:26px;height:26px;border-radius:50%;border:2px solid var(--bd);flex:none;display:block}
 #col{width:44px!important;height:34px!important}
 #pal{display:inline-flex;gap:5px;align-items:center}#pal button{width:26px;height:26px;border-radius:50%;border:2px solid var(--bd);padding:0}body.hl #pal{display:none}
+html,body{direction:ltr}
+#hd,#dock,.sheet,#zm,#empty{direction:rtl}
+#zw{position:relative;overflow:hidden}
+#pages{position:absolute;left:0;top:0}
+@media(max-width:560px){#top b{display:none}#top{justify-content:space-between;gap:4px}#top button,#top label.b{padding:7px 9px;font-size:12px}}
 </style>
 </head>
 <body>
@@ -182,7 +187,7 @@ async function load(){
     const ctx=cv.getContext('2d',{willReadFrequently:true});
     await p.render({canvasContext:ctx,viewport:vp}).promise;
     const svg=document.createElementNS(NS,'svg'),L=el('div','lay');
-    w.append(cv,svg,L);$('pages').append(w);
+    w.append(cv,svg,L);$('pages').append(w);applyZ();
     const pg={n,w,svg,L,ctx,p,cw:vp.width,ch:vp.height};pages.push(pg);
     const tc=await p.getTextContent();
     for(const it of tc.items){
