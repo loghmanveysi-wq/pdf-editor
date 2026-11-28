@@ -95,57 +95,108 @@ html,body{direction:ltr}
 #zw{position:relative;overflow:hidden}
 #pages{position:absolute;left:0;top:0}
 @media(max-width:560px){#top b{display:none}#top{justify-content:space-between;gap:4px}#top button,#top label.b{padding:7px 9px;font-size:12px}}
+
+@font-face{font-family:V;font-weight:700;src:url(./fonts/Vazirmatn-Bold.ttf)}
+body{font-size:14px}
+#top{display:flex;align-items:center;gap:8px;padding:6px 8px}
+#top b{flex:1;font-weight:700;font-size:15px;white-space:nowrap}
+#top .grp{display:inline-flex;gap:4px}
+#top button,#top label.b{min-height:40px;display:inline-flex;align-items:center;gap:4px}
+#top .prim{background:#fff;color:#0f766e;font-weight:700;border-color:#fff}
+#dock{justify-content:space-around;overflow:visible;padding:6px 4px}
+#dock button{flex:1;min-width:0;min-height:52px;font-size:11px;font-weight:700}
+.sheet{max-height:52vh}
+.sheet h4{margin:10px 0 6px;font-size:13px;font-weight:700;opacity:.75}
+.grid button{min-height:68px;font-size:12px}
+.tips p{margin:6px 0;line-height:1.9}
+#tl{font-weight:700;color:#0f766e;white-space:nowrap}
+#empty{text-align:center}
+#empty .logo{font-size:54px}
+#empty h2{margin:4px 0 8px;font-weight:700}
+#empty p{opacity:.8;line-height:1.9;margin:0 0 14px}
+#empty .big{display:block;width:100%;padding:14px;font-size:17px;font-weight:700}
+#empty .ghost{display:block;width:100%;margin-top:8px;background:transparent!important;color:#0f766e!important;border:1px solid #0f766e55!important;font-size:14px!important}
+#zm{opacity:.3;transition:opacity .25s}#zm.on{opacity:1}
+#zm button{width:40px;height:40px;background:#fffc;backdrop-filter:blur(6px);font-size:18px}
+#toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translateX(-50%);max-width:88vw;background:#111d;color:#fff;padding:10px 16px;border-radius:14px;z-index:90;opacity:0;pointer-events:none;transition:opacity .2s;white-space:pre-wrap;text-align:center;direction:rtl}
+#toast.on{opacity:1}
 </style>
 </head>
 <body>
 <div id="hd">
-<header id="top"><b>ویرایشگر PDF</b>
-  <label class="b">📂 باز کردن<input id="file" type="file" accept="application/pdf" hidden></label>
-  <button id="undo">↩</button><button id="redo">↪</button><button id="ocr">🔍 OCR</button><button id="save">PDF</button><button id="word">Word</button></header>
-<div id="props"><span id="pal"></span><select id="font" title="فونت"></select><span id="pal"></span><input id="col" type="color" value="#000000" title="رنگ دلخواه">
+<header id="top">
+  <label class="b"><span>📂</span> باز کردن<input id="file" type="file" accept="application/pdf" hidden></label>
+  <span class="grp"><button id="undo" title="واگرد">↩</button><button id="redo" title="بازگردانی">↪</button></span>
+  <b>ویرایشگر PDF</b>
+  <button id="sv" class="prim">💾 ذخیره</button>
+  <button id="ex">⬆ خروجی</button>
+</header>
+<div id="props"><span id="tl"></span><select id="font" title="فونت"></select><span id="pal"></span><input id="col" type="color" value="#000000" title="رنگ دلخواه">
   <span>اندازه</span><input id="sz" type="number" value="14" min="4"><span>ضخامت</span><input id="lw" type="number" value="2" min="1">
-  <label><input id="fill" type="checkbox"> پر</label><button id="bB"><b>B</b></button><button id="bI"><i>I</i></button><button id="bU"><u>U</u></button><span id="eszl">اندازهٔ پاک‌کن</span><input id="esz" type="range" min="6" max="120" value="28"><span id="hszl">اندازهٔ هایلایت</span><input id="hsz" type="range" min="6" max="70" value="20"><input id="hcol" type="color" value="#facc15" title="رنگ هایلایت"></div>
+  <label><input id="fill" type="checkbox"> پر</label><button id="bB"><b>B</b></button><button id="bI"><i>I</i></button><button id="bU"><u>U</u></button><span id="eszl">اندازهٔ پاک‌کن</span><input id="esz" type="range" min="6" max="120" value="28"><span id="hszl">اندازهٔ هایلایت</span><input id="hsz" type="range" min="6" max="70" value="20"><input id="hcol" type="color" value="#facc15" title="رنگ هایلایت"><button id="del" title="حذف">🗑</button></div>
 </div>
 <nav id="dock">
   <button data-t="select" class="on"><span>👆</span>انتخاب</button>
   <button data-t="move"><span>✥</span>جابه‌جایی</button>
   <button data-t="text"><span>✏️</span>متن</button>
-  <button data-t="line"><span>╱</span>خط</button>
-  <button data-t="rect"><span>▭</span>مستطیل</button>
-  <label><button type="button" onclick="$('img').click()"><span>🖼</span>تصویر</button><input id="img" type="file" accept="image/*" hidden></label>
+  <button data-t="highlight"><span>🖍</span>هایلایت</button>
   <button data-t="erase"><span>🧽</span>پاک‌کن</button>
-  <button id="del"><span>🗑</span>حذف</button>
   <button id="mm"><span>⋯</span>بیشتر</button>
 </nav>
-<div id="zw"><div id="pages"><div id="empty">یک فایل PDF باز کنید. همهٔ کارها روی همین دستگاه انجام می‌شود و چیزی به سرور فرستاده نمی‌شود.<br><button onclick="$('file').click()">📂 باز کردن PDF</button></div></div></div>
+<div id="zw"><div id="pages"><div id="empty"><div class="logo">📄</div><h2>ویرایشگر PDF</h2>
+<p>متن، تصویر، فرم و امضا را مستقیماً ویرایش کنید. همه‌چیز روی همین گوشی انجام می‌شود و به اینترنت نیاز ندارد.</p>
+<button class="big" onclick="$('file').click()">📂 باز کردن PDF</button>
+<button class="ghost" onclick="$('help').hidden=false">❓ راهنما</button></div></div></div>
 <div id="bd" hidden></div>
 <div id="zm"><button id="zin">＋</button><button id="zfit">⤢</button><button id="zout">－</button></div>
 
-<div id="more" class="sheet" hidden><div class="grid">
-  <button id="mFind"><span>🔎</span>جستجو و جایگزینی</button>
+<div id="more" class="sheet" hidden>
+<h4>نوشتن و رسم</h4><div class="grid">
+  <button data-t="line"><span>╱</span>خط</button>
+  <button data-t="rect"><span>▭</span>مستطیل</button>
+  <button data-t="ellipse"><span>◯</span>بیضی</button>
+  <button data-t="arrow"><span>➜</span>پیکان</button>
+  <button data-t="ink"><span>〰️</span>نقاشی آزاد</button>
+  <button data-t="underline"><span>U̲</span>زیرخط</button>
+  <button data-t="strike"><span>S̶</span>خط‌خورده</button>
+  <button onclick="$('img').click()"><span>🖼</span>تصویر</button><input id="img" type="file" accept="image/*" hidden>
   <button id="mSign"><span>✍️</span>امضا</button>
   <button data-t="note"><span>💬</span>یادداشت</button>
-  <button data-t="highlight"><span>🖍</span>هایلایت</button>
   <button data-t="link"><span>🔗</span>لینک</button>
+</div>
+<h4>سند و صفحه‌ها</h4><div class="grid">
+  <button id="mPages"><span>📑</span>صفحه‌ها</button>
+  <button data-t="crop"><span>✂️</span>برش صفحه</button>
+  <button id="mHF"><span>🔢</span>سرصفحه و پاصفحه</button>
   <button id="mMark"><span>🔖</span>نشانک</button>
+  <button id="mFind"><span>🔎</span>جستجو و جایگزینی</button>
+  <button data-t="redact"><span>⬛</span>سانسور</button>
+</div>
+<h4>فرم‌ها</h4><div class="grid">
   <button id="mForm"><span>📝</span>تکمیل فرم</button>
   <button data-t="ftext"><span>▭</span>فیلد متنی</button>
   <button data-t="fcheck"><span>☑</span>چک‌باکس</button>
-  <button id="mPages"><span>📑</span>صفحه‌ها</button>
-  <button id="mPrint"><span>🖨</span>چاپ</button>
-  <button data-t="underline"><span>U̲</span>زیرخط</button>
-  <button data-t="strike"><span>S̶</span>خط‌خورده</button>
-  <button data-t="ink"><span>〰️</span>نقاشی آزاد</button>
-  <button data-t="arrow"><span>➜</span>پیکان</button>
-  <button data-t="ellipse"><span>◯</span>بیضی</button>
-  <button data-t="redact"><span>⬛</span>سانسور</button>
-  <button data-t="crop"><span>✂️</span>برش صفحه</button>
   <button data-t="fdrop"><span>▾</span>فیلد کشویی</button>
-  <button id="mHF"><span>🔢</span>سرصفحه و پاصفحه</button>
+</div>
+<h4>هوشمند و فونت</h4><div class="grid">
+  <button id="ocr"><span>🔍</span>OCR</button>
+  <button onclick="$('fontFile').click()"><span>🔤</span>افزودن فونت</button><input id="fontFile" type="file" accept=".ttf,.otf" hidden>
+  <button id="mHelp"><span>❓</span>راهنما</button>
+</div></div>
+<div id="exp" class="sheet" hidden><h4>ذخیره و خروجی</h4><div class="grid">
+  <button id="save"><span>📄</span>PDF</button>
+  <button id="word"><span>📝</span>Word</button>
+  <button id="mImg"><span>🖼</span>تصویر</button>
+  <button id="mPrint"><span>🖨</span>چاپ</button>
   <button id="mExt"><span>📤</span>استخراج صفحه‌ها</button>
   <button id="mComp"><span>🗜</span>کاهش حجم</button>
-  <button id="mImg"><span>🖼</span>خروجی تصویر</button>
-  <button onclick="$('fontFile').click()"><span>🔤</span>افزودن فونت</button><input id="fontFile" type="file" accept=".ttf,.otf" hidden>
+</div></div>
+<div id="help" class="sheet" hidden><h4>راهنمای سریع</h4><div class="tips">
+  <p>• برای ویرایش، ابزار «انتخاب» را بزنید و روی هر متن بزنید. برای جابه‌جایی از «جابه‌جایی» یا دستگیرهٔ ✥ استفاده کنید.</p>
+  <p>• ابزارها فعال می‌مانند تا ابزار دیگری انتخاب کنید. با نگه‌داشتن انگشت نیم ثانیه، صفحه اسکرول می‌شود.</p>
+  <p>• با دو انگشت زوم و جابه‌جایی کنید. دکمهٔ ⤢ صفحه را روی عرض گوشی می‌نشاند.</p>
+  <p>• OCR برای متن روی عکس است. خط‌های نارنجی را بازبینی کنید.</p>
+  <p>• «ذخیره» فایل را در Documents/PDF-Editor می‌گذارد. Word و تصویر از «خروجی» هستند.</p>
 </div></div>
 <div id="sig" class="sheet" hidden><canvas id="sc" width="300" height="150"></canvas><div class="row"><button id="sOk">ثبت امضا</button><button id="sClr">پاک</button><button id="sX">بستن</button></div></div>
 <div id="frm" class="sheet" hidden><div id="frl"></div><button onclick="$('frm').hidden=true">تأیید</button></div>
@@ -165,7 +216,7 @@ let bytes,fname='edited.pdf',pages=[],tool='select',sel=null,fills={},marks=[];
 const el=(t,c)=>{const e=document.createElement(t);if(c)e.className=c;return e};
 const rtl=s=>/[\u0590-\u08FF]/.test(s);
 
-function setTool(t){tool=t;ctxUp();$('more').hidden=true;{const B=document.body.classList;B.toggle('draw',!['select','move','text','note'].includes(t));B.toggle('hl',t==='highlight');B.toggle('mv',t==='move');B.toggle('tt',t==='text');B.toggle('er',t==='erase');document.querySelectorAll('.t').forEach(d=>d.contentEditable=t!=='move')}
+function setTool(t){tool=t;ctxUp();$('tl').textContent=t==='select'?'':(TN[t]||'');$('more').hidden=true;{const B=document.body.classList;B.toggle('draw',!['select','move','text','note'].includes(t));B.toggle('hl',t==='highlight');B.toggle('mv',t==='move');B.toggle('tt',t==='text');B.toggle('er',t==='erase');document.querySelectorAll('.t').forEach(d=>d.contentEditable=t!=='move')}
   document.querySelectorAll('[data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t===t))}
 document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>setTool(b.dataset.t));
 let Z=1,multi=false;
@@ -470,6 +521,15 @@ $('mPages').onclick=()=>{if(pages.length){pgList();$('pgm').hidden=false}};
 $('pgX').onclick=()=>$('pgm').hidden=true;
 $('pgAdd').onchange=async e=>{const f=e.target.files[0];if(!f)return;const buf=await f.arrayBuffer();
   await pageOp(async d=>{const o=await PDFLib.PDFDocument.load(buf);(await d.copyPages(o,o.getPageIndices())).forEach(p=>d.addPage(p))});e.target.value=''};
+const TN={select:'انتخاب',move:'جابه‌جایی',text:'متن',highlight:'هایلایت',erase:'پاک‌کن',line:'خط',rect:'مستطیل',ellipse:'بیضی',arrow:'پیکان',ink:'نقاشی',underline:'زیرخط',strike:'خط‌خورده',note:'یادداشت',link:'لینک',redact:'سانسور',crop:'برش',ftext:'فیلد متنی',fcheck:'چک‌باکس',fdrop:'فیلد کشویی'};
+function toast(m,ms){let t=$('toast');if(!t){t=el('div');t.id='toast';document.body.append(t)}t.textContent=m;t.className='on';clearTimeout(t._t);t._t=setTimeout(()=>t.className='',ms||2200+m.length*35)}
+window.alert=m=>toast(String(m));
+$('sv').onclick=()=>$('save').click();
+$('ex').onclick=()=>{$('exp').hidden=false};
+$('mHelp').onclick=()=>{$('help').hidden=false};
+$('exp').addEventListener('click',e=>{if(e.target.closest('button'))$('exp').hidden=true});
+{let t=0;const zm=$('zm'),on=()=>{zm.classList.add('on');clearTimeout(t);t=setTimeout(()=>zm.classList.remove('on'),2500)};
+ addEventListener('touchstart',on,{passive:true});addEventListener('scroll',on,{passive:true})}
 let stroke=null,panning=false;
 const blC={};let msr;
 function baseline(d){const cs=getComputedStyle(d),k=cs.fontFamily+cs.fontSize+cs.fontWeight+cs.fontStyle;if(blC[k]!=null)return blC[k];
