@@ -120,14 +120,22 @@ body{font-size:14px}
 #zm button{width:40px;height:40px;background:#fffc;backdrop-filter:blur(6px);font-size:18px}
 #toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translateX(-50%);max-width:88vw;background:#111d;color:#fff;padding:10px 16px;border-radius:14px;z-index:90;opacity:0;pointer-events:none;transition:opacity .2s;white-space:pre-wrap;text-align:center;direction:rtl}
 #toast.on{opacity:1}
+body.rd #dock,body.rd #props,body.rd #mh{display:none!important}
+body.rd .t{pointer-events:auto;outline:none!important;-webkit-user-select:text;user-select:text}
+#md{font-weight:700}
+#pgi{position:fixed;left:12px;bottom:calc(96px + env(safe-area-inset-bottom));z-index:55;border:0;border-radius:999px;padding:8px 14px;background:#fffc;backdrop-filter:blur(6px);box-shadow:0 2px 10px #0004;font:700 13px V,Tahoma,sans-serif;color:#111;direction:rtl}
+#pgi[hidden]{display:none}
+body.rd #pgi,body.rd #zm{bottom:calc(20px + env(safe-area-inset-bottom))}
+#prog{position:fixed;left:12px;right:12px;top:calc(78px + env(safe-area-inset-top));z-index:65;background:#111d;color:#fff;border-radius:14px;padding:8px 12px;font-size:12px;direction:rtl}#prog[hidden]{display:none}#prog i{display:block;height:5px;border-radius:3px;background:#fff3;margin-top:6px;overflow:hidden}#prog b{display:block;height:100%;width:0;background:#14b8a6;transition:width .2s}
 </style>
 </head>
-<body>
+<body class="rd">
 <div id="hd">
 <header id="top">
   <label class="b"><span>📂</span> باز کردن<input id="file" type="file" accept="application/pdf" hidden></label>
   <span class="grp"><button id="undo" title="واگرد">↩</button><button id="redo" title="بازگردانی">↪</button></span>
   <b>ویرایشگر PDF</b>
+  <button id="md">✏️ ویرایش</button>
   <button id="sv" class="prim">💾 ذخیره</button>
   <button id="ex">⬆ خروجی</button>
 </header>
@@ -143,11 +151,14 @@ body{font-size:14px}
   <button data-t="erase"><span>🧽</span>پاک‌کن</button>
   <button id="mm"><span>⋯</span>بیشتر</button>
 </nav>
+<div id="prog" hidden><span id="progt"></span><i><b id="progb"></b></i></div>
 <div id="zw"><div id="pages"><div id="empty"><div class="logo">📄</div><h2>ویرایشگر PDF</h2>
 <p>متن، تصویر، فرم و امضا را مستقیماً ویرایش کنید. همه‌چیز روی همین گوشی انجام می‌شود و به اینترنت نیاز ندارد.</p>
 <button class="big" onclick="$('file').click()">📂 باز کردن PDF</button>
+<button class="ghost" id="resume" style="display:none"></button>
 <button class="ghost" onclick="$('help').hidden=false">❓ راهنما</button></div></div></div>
 <div id="bd" hidden></div>
+<button id="pgi" hidden></button>
 <div id="zm"><button id="zin">＋</button><button id="zfit">⤢</button><button id="zout">－</button></div>
 
 <div id="more" class="sheet" hidden>
@@ -192,7 +203,7 @@ body{font-size:14px}
   <button id="mComp"><span>🗜</span>کاهش حجم</button>
 </div></div>
 <div id="help" class="sheet" hidden><h4>راهنمای سریع</h4><div class="tips">
-  <p>• برای ویرایش، ابزار «انتخاب» را بزنید و روی هر متن بزنید. برای جابه‌جایی از «جابه‌جایی» یا دستگیرهٔ ✥ استفاده کنید.</p>
+  <p>• فایل در حالت «مطالعه» باز می‌شود (لمس متن آن را تغییر نمی‌دهد و می‌توانید متن را انتخاب و کپی کنید). برای ویرایش «✏️ ویرایش» را بزنید، سپس روی هر متن بزنید. برای جابه‌جایی از «جابه‌جایی» یا دستگیرهٔ ✥ استفاده کنید.</p>
   <p>• ابزارها فعال می‌مانند تا ابزار دیگری انتخاب کنید. با نگه‌داشتن انگشت نیم ثانیه، صفحه اسکرول می‌شود.</p>
   <p>• با دو انگشت زوم و جابه‌جایی کنید. دکمهٔ ⤢ صفحه را روی عرض گوشی می‌نشاند.</p>
   <p>• OCR برای متن روی عکس است. خط‌های نارنجی را بازبینی کنید.</p>
@@ -216,7 +227,7 @@ let bytes,fname='edited.pdf',pages=[],tool='select',sel=null,fills={},marks=[];
 const el=(t,c)=>{const e=document.createElement(t);if(c)e.className=c;return e};
 const rtl=s=>/[\u0590-\u08FF]/.test(s);
 
-function setTool(t){tool=t;ctxUp();$('tl').textContent=t==='select'?'':(TN[t]||'');$('more').hidden=true;{const B=document.body.classList;B.toggle('draw',!['select','move','text','note'].includes(t));B.toggle('hl',t==='highlight');B.toggle('mv',t==='move');B.toggle('tt',t==='text');B.toggle('er',t==='erase');document.querySelectorAll('.t').forEach(d=>d.contentEditable=t!=='move')}
+function setTool(t){tool=t;ctxUp();$('tl').textContent=t==='select'?'':(TN[t]||'');$('more').hidden=true;{const B=document.body.classList;B.toggle('draw',!['select','move','text','note'].includes(t));B.toggle('hl',t==='highlight');B.toggle('mv',t==='move');B.toggle('tt',t==='text');B.toggle('er',t==='erase');document.querySelectorAll('.t').forEach(d=>d.contentEditable=!rmode&&t!=='move')}
   document.querySelectorAll('[data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t===t))}
 document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>setTool(b.dataset.t));
 let Z=1,multi=false;
@@ -226,31 +237,48 @@ function select(e){if(sel)sel.classList.remove('sel');sel=e;if(e)e.classList.add
     $('sz').value=Math.round(parseFloat(e.style.fontSize)/S*10)/10}}
 
 $('file').onchange=async e=>{const f=e.target.files[0];if(!f)return;
-  fname=f.name.replace(/\.pdf$/i,'')+'-edited.pdf';bytes=new Uint8Array(await f.arrayBuffer());await load();fit()};
+  fname=f.name.replace(/\.pdf$/i,'')+'-edited.pdf';bytes=new Uint8Array(await f.arrayBuffer());await load();fit();setMode(true)};
 
+let pdfDoc=null,io1=null,io2=null,renderQ=[],rqBusy=false,showP=true,warnedC=false,warnedW=false;
+function progress(t,f){const e=$('prog');if(t===null){e.hidden=true;return}if(!showP)return;e.hidden=false;$('progt').textContent=t;$('progb').style.width=Math.round((f||0)*100)+'%'}
 async function load(){
-  const doc=await pdfjsLib.getDocument({data:bytes.slice(),fontExtraProperties:true}).promise;
+  if(io1)io1.disconnect();if(io2)io2.disconnect();renderQ.length=0;warnedC=false;
+  const doc=pdfDoc=await pdfjsLib.getDocument({data:bytes.slice(),fontExtraProperties:true}).promise;
   $('pages').innerHTML='';pages=[];hist.length=0;redoS.length=0;
-  for(let n=1;n<=doc.numPages;n++){
-    const p=await doc.getPage(n),vp=p.getViewport({scale:S});
-    const w=el('div','pg');w.style.width=vp.width+'px';w.style.height=vp.height+'px';
-    const cv=el('canvas');cv.width=vp.width;cv.height=vp.height;
-    const ctx=cv.getContext('2d',{willReadFrequently:true});
-    await p.render({canvasContext:ctx,viewport:vp}).promise;
-    const svg=document.createElementNS(NS,'svg'),L=el('div','lay');
-    w.append(cv,svg,L);$('pages').append(w);applyZ();
-    const pg={n,w,svg,L,ctx,p,cw:vp.width,ch:vp.height};pages.push(pg);
-    const tc=await p.getTextContent();
+  const N=doc.numPages,ps=[];
+  for(let a=1;a<=N;a+=25){progress('در حال آماده‌سازی…',a/N);const b=[];for(let n=a;n<Math.min(N+1,a+25);n++)b.push(doc.getPage(n));ps.push(...await Promise.all(b))}
+  progress(null);
+  io1=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)want(e.target._pg)}),{rootMargin:'150% 0px'});
+  io2=new IntersectionObserver(es=>es.forEach(e=>{if(!e.isIntersecting)unload(e.target._pg)}),{rootMargin:'500% 0px'});
+  ps.forEach((p,i)=>{
+    const vp=p.getViewport({scale:S}),w=el('div','pg');w.style.width=vp.width+'px';w.style.height=vp.height+'px';
+    const cv=el('canvas'),ctx=cv.getContext('2d',{willReadFrequently:true}),svg=document.createElementNS(NS,'svg'),L=el('div','lay');
+    cv.width=1;cv.height=1;w.append(cv,svg,L);$('pages').append(w);
+    const pg={n:i+1,w,cv,svg,L,ctx,p,vp,cw:vp.width,ch:vp.height,st:0,items:false};pages.push(pg);w._pg=pg;
+    w.addEventListener('pointerdown',e=>{holdPan(e);draw(e,pg)});
+    io1.observe(w);io2.observe(w)});
+  applyZ();
+}
+function want(pg){if(!pg||pg.st!==0)return;pg.st=2;renderQ.push(pg);pump()}
+async function pump(){if(rqBusy)return;rqBusy=true;
+  while(renderQ.length){const pg=renderQ.shift();if(pages.indexOf(pg)<0)continue;try{await renderPg(pg)}catch(_){pg.st=0}}
+  rqBusy=false}
+function renderPg(pg){return pg.pr||(pg.pr=(async()=>{
+  const {p,vp,cv,ctx}=pg;cv.width=vp.width;cv.height=vp.height;
+  await p.render({canvasContext:ctx,viewport:vp}).promise;
+  if(!pg.items){pg.items=true;const tc=await p.getTextContent();
     for(const it of tc.items){
       if(!it.str.trim())continue;
       const t=pdfjsLib.Util.transform(vp.transform,it.transform),fs=Math.hypot(t[2],t[3]),x=t[4],y=t[5];
       let nm='';try{const fo=p.commonObjs.get(it.fontName);nm=fo.name||'';if(fo.data&&!FD[it.fontName])FD[it.fontName]=fo.data}catch(_){}
       mkItem(pg,{x,y,fs,w:it.width*S,str:it.str,fn:it.fontName,nm:nm.replace(/^[A-Z]{6}\+/,''),bold:/bold|black|heavy/i.test(nm),italic:/italic|oblique/i.test(nm)});
     }
-    watch(pg);w.addEventListener('pointerdown',e=>{holdPan(e);draw(e,pg)});
-  }
-}
-
+    watch(pg)}
+  pg.st=1})().finally(()=>{pg.pr=null}))}
+function unload(pg){if(!pg||pg.st!==1)return;pg.cv.width=1;pg.cv.height=1;pg.st=0}
+async function ensure(pg){if(pg.items&&pg.st===1)return;const i=renderQ.indexOf(pg);if(i>=0)renderQ.splice(i,1);
+  if(pg.pr)await pg.pr;if(pg.items&&pg.st===1)return;pg.st=2;await renderPg(pg)}
+function trimPages(){for(const pg of pages){if(pg.st!==1)continue;const r=pg.w.getBoundingClientRect();if(r.bottom<-5*innerHeight||r.top>6*innerHeight)unload(pg)}}
 function mkItem(pg,o){
   const ctx=pg.ctx,W=pg.cw,H=pg.ch,cl=(v,m)=>Math.max(0,Math.min(m-1,Math.round(v)));
   const bx=cl(o.x,W),by=cl(o.y-o.fs,H),bw=Math.max(1,Math.min(W-bx,Math.round(o.w))),bh=Math.max(1,Math.min(H-by,Math.round(o.fs*1.2)));
@@ -259,7 +287,7 @@ function mkItem(pg,o){
   for(let i=0;i<im.length;i+=4){const k=Math.abs(im[i]-bg[0])+Math.abs(im[i+1]-bg[1])+Math.abs(im[i+2]-bg[2]);if(k>best){best=k;col=[im[i],im[i+1],im[i+2]]}}
   if(best<90)col=[0,0,0];
   const hx='#'+col.map(v=>v.toString(16).padStart(2,'0')).join('');
-  const d=el('div','t');d.contentEditable=true;d.dir='auto';d.textContent=o.str;d.spellcheck=true;d.lang='fa';d.dataset.c=hx;if(o.bold)d.dataset.ob=1;if(o.italic)d.dataset.oi=1;if(!o.fn){if(o.bold)d.dataset.b=1;if(o.italic)d.dataset.i=1}
+  const d=el('div','t');d.contentEditable=true;d.dir='auto';d.textContent=o.str;d.spellcheck=true;d.lang='fa';d.contentEditable=!rmode;d.dataset.c=hx;if(o.bold)d.dataset.ob=1;if(o.italic)d.dataset.oi=1;if(!o.fn){if(o.bold)d.dataset.b=1;if(o.italic)d.dataset.i=1}
   Object.assign(d.style,{left:o.x+'px',top:(o.y-o.fs)+'px',fontSize:o.fs+'px',minWidth:o.w+'px',color:'transparent',caretColor:hx,...(o.fn?{fontFamily:`"${o.fn}",V,Tahoma`}:{}),...(o.ff?{fontFamily:`'${o.ff}',Tahoma`}:{}),
     fontWeight:!o.fn&&o.bold?'bold':'normal',fontStyle:!o.fn&&o.italic?'italic':'normal'});
   const m=d._o={rx:rtl(o.str)?o.x+o.w:null,ox:o.x,oy:o.y,ofs:o.fs,x:o.x,y:o.y,fs:o.fs,w:o.w,bg:[bg[0],bg[1],bg[2]],dirty:false,bold:o.bold};
@@ -374,7 +402,7 @@ async function build0(){
     for(const[n,v]of Object.entries(fills)){try{const f=form.getField(n);
       if(f instanceof PDFLib.PDFTextField)f.setText(v);else if(f instanceof PDFLib.PDFCheckBox)v?f.check():f.uncheck();else if(f.select)f.select(v)}catch(_){}}
     for(const pg of pages){
-      const P=doc.getPage(pg.n-1),H=P.getHeight();
+      progress('در حال ساخت فایل…',pg.n/pages.length);const P=doc.getPage(pg.n-1),H=P.getHeight();
       for(const s of pg.svg.children){const k=s.dataset.k;if(!k)continue;
         const bx=+s.getAttribute('x')/S,bw=+s.getAttribute('width')/S,bh=+s.getAttribute('height')/S,by=H-(+s.getAttribute('y'))/S-bh;
         if(k==='highlight')P.drawRectangle({x:bx,y:by,width:bw,height:bh,color:PDFLib.rgb(.98,.8,.08),opacity:.4});
@@ -429,11 +457,18 @@ async function build0(){
 }
 $('save').onclick=async()=>{
   if(!bytes)return alert('ابتدا یک PDF باز کنید.');
-  const b=$('save');b.textContent='…';
-  try{await dl(new Blob([await build()],{type:'application/pdf'}),fname)}catch(err){alert('خطا در ذخیره: '+err.message)}
+  if(!await warnCovered())return;const b=$('save');b.textContent='…';
+  try{await dl(new Blob([await build()],{type:'application/pdf'}),fname);clearDraft()}catch(err){alert('خطا در ذخیره: '+err.message)}
   b.textContent='PDF';
 };
 
+async function warnCovered(){
+  if(warnedC)return true;
+  const has=pages.some(pg=>[...pg.L.children].some(d=>d._o&&d._o.dirty)||[...pg.svg.children].some(x=>x.dataset.er||x.dataset.erb));
+  if(!has)return true;warnedC=true;
+  return confirm('توجه: متن یا تصویری که ویرایش یا پاک کرده‌اید فقط پوشانده شده و در خود فایل باقی می‌ماند (قابل جستجو و کپی است).\nبرای حذف واقعی از «سانسور» استفاده کنید.\n\nذخیره ادامه پیدا کند؟')}
+async function warnWord(){if(warnedW)return true;warnedW=true;
+  return confirm('خروجی Word: تصویر صفحه + متن‌های قابل ویرایش در همان محل. جدول، نمودار و شکل‌ها به‌صورت تصویر می‌مانند و اگر فونت روی دستگاه مقصد نصب نباشد جایگزین می‌شود.\n\nادامه؟')}
 async function dl(blob,name){
   const C=window.Capacitor;
   if(C&&C.isNativePlatform&&C.isNativePlatform()){
@@ -474,12 +509,13 @@ function mkNote(pg,x,y,t){
 }
 $('mm').onclick=()=>$('more').hidden=!$('more').hidden;
 $('more').addEventListener('click',e=>{if(e.target.closest('button'))$('more').hidden=true});
-$('mFind').onclick=()=>{
+$('mFind').onclick=async()=>{
   const f=prompt('جستجو:');if(!f)return;const r=prompt('جایگزین با (خالی = فقط پیدا کردن):');let n=0;
-  for(const pg of pages)for(const d of pg.L.children){
-    if(!d.classList.contains('t')||!d.textContent.includes(f))continue;n++;d.style.outline='2px solid #f59e0b';
-    if(r){d.textContent=d.textContent.split(f).join(r);touch(d)}}
-  alert(n+' مورد پیدا شد');
+  for(const pg of pages){await ensure(pg);progress('در حال جستجو…',pg.n/pages.length);
+    for(const d of pg.L.children){
+      if(!d.classList.contains('t')||!d.textContent.includes(f))continue;n++;d.style.outline='2px solid #f59e0b';
+      if(r){d.textContent=d.textContent.split(f).join(r);touch(d)}}}
+  progress(null);trimPages();alert(n+' مورد پیدا شد');
 };
 $('mMark').onclick=()=>{if(!pages.length)return;const t=prompt('عنوان نشانک برای این صفحه');if(t){marks.push({t,p:curPage().n});alert('نشانک ثبت شد')}};
 $('mPrint').onclick=async()=>{if(!bytes)return;try{await dl(new Blob([await build()],{type:'application/pdf'}),fname)}catch(e){alert(e.message)}};
@@ -503,11 +539,11 @@ $('mForm').onclick=async()=>{
     r.append(i);L.append(r)}
   $('frm').hidden=false;
 };
-async function pageOp(fn){const doc=await PDFLib.PDFDocument.load(await build());await fn(doc);bytes=await doc.save();hf=null;await load();applyZ();pgList()}
+async function pageOp(fn){toast('تغییرات قبلی در فایل ثبت شد و واگرد از این‌جا شروع می‌شود.');const doc=await PDFLib.PDFDocument.load(await build());await fn(doc);bytes=await doc.save();hf=null;await load();applyZ();pgList()}
 function pgList(){
   const L=$('pgl');L.innerHTML='';
   pages.forEach((pg,i)=>{const r=el('div','row'),c=el('canvas');c.width=44;c.height=Math.round(44*pg.ch/pg.cw);
-    c.getContext('2d').drawImage(pg.w.querySelector('canvas'),0,0,c.width,c.height);
+    pdfDoc.getPage(i+1).then(pp=>{const v=pp.getViewport({scale:44/pp.getViewport({scale:1}).width});c.width=v.width;c.height=v.height;pp.render({canvasContext:c.getContext('2d'),viewport:v})}).catch(()=>{});
     const B=(t,f)=>{const x=el('button');x.textContent=t;x.onclick=()=>pageOp(f);return x};
     r.append(c,Object.assign(el('b'),{textContent:'صفحه '+(i+1)}),
       B('▲',async d=>{if(i){const p=d.getPage(i);d.removePage(i);d.insertPage(i-1,p)}}),
@@ -573,7 +609,7 @@ function matchFont(nm){const n=(nm||'').toLowerCase().replace(/[^a-z]/g,'');if(n
 const idb=()=>new Promise((res,rej)=>{const r=indexedDB.open('pdfed',1);r.onupgradeneeded=()=>r.result.createObjectStore('f');r.onsuccess=()=>res(r.result);r.onerror=rej});
 fetch('./fonts/user/fonts.json').then(r=>r.ok?r.json():[]).then(a=>a.filter(Boolean).forEach(f=>addFont(f.replace(/\.[^.]+$/,''),'./fonts/user/'+encodeURI(f)))).catch(()=>{});
 idb().then(d=>{const o=d.transaction('f').objectStore('f'),ks=o.getAllKeys(),vs=o.getAll();
-  vs.onsuccess=()=>ks.result.forEach((k,i)=>addFont(k,URL.createObjectURL(new Blob([vs.result[i]]))))}).catch(()=>{});
+  vs.onsuccess=()=>ks.result.forEach((k,i)=>{if(String(k).startsWith('__'))return;addFont(k,URL.createObjectURL(new Blob([vs.result[i]])))})}).catch(()=>{});
 $('fontFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;const buf=await f.arrayBuffer(),k=f.name.replace(/\.[^.]+$/,'');
   addFont(k,URL.createObjectURL(new Blob([buf])));try{(await idb()).transaction('f','readwrite').objectStore('f').put(buf,k)}catch(_){}
   $('font').value=k;alert('فونت «'+k+'» اضافه شد و در برنامه می‌ماند.');e.target.value=''};
@@ -581,7 +617,7 @@ function ctxUp(){document.body.classList.toggle('ctx',!!sel||['text','line','rec
 function applyZ(){const p=$('pages'),mw=Math.max(0,...pages.map(g=>g.cw)),cw=document.documentElement.clientWidth;
   p.style.width=Math.max(mw,cw/Z)+'px';p.style.transform=`scale(${Z})`;
   $('zw').style.width=p.offsetWidth*Z+'px';$('zw').style.height=p.offsetHeight*Z+'px';
-  document.body.classList.toggle('zoomed',mw*Z>cw+2);place()}
+  document.body.classList.toggle('zoomed',mw*Z>cw+2);place();pgiUpdate()}
 function setZoom(z,cx,cy){z=Math.max(.25,Math.min(4,z));cx=cx==null?innerWidth/2:cx;cy=cy==null?innerHeight/2:cy;
   const px=(scrollX+cx)/Z,py=(scrollY+cy)/Z;Z=z;applyZ();scrollTo(px*Z-cx,py*Z-cy)}
 function fit(){if(pages.length){Z=1;setZoom(document.documentElement.clientWidth/Math.max(...pages.map(g=>g.cw)),0,0);scrollTo(0,0)}}
@@ -603,10 +639,11 @@ function goBack(){
   if(sheets.some(x=>!x.hidden))return closeSheets();
   if(tool!=='select')return setTool('select');
   if(sel){if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();return select(null)}
+  if(!rmode&&bytes)return setMode(true);
   if(bytes){if(hist.length&&!confirm('تغییرات ذخیره‌نشده از بین می‌رود. به صفحهٔ اول برگردید؟'))return;
-    bytes=null;pages=[];hist.length=redoS.length=0;$('pages').innerHTML='';$('pages').append(EMPTY);Z=1;applyZ();scrollTo(0,0);return}
+    bytes=null;pages=[];hist.length=redoS.length=0;clearDraft();$('pages').innerHTML='';$('pages').append(EMPTY);Z=1;applyZ();scrollTo(0,0);return}
   exit()}
-{const P=window.Capacitor&&Capacitor.Plugins||{};if(P.App)P.App.addListener('backButton',goBack);
+{const P=window.Capacitor&&Capacitor.Plugins||{};if(P.App){P.App.addListener('backButton',goBack);P.App.addListener('appStateChange',st=>{if(!st.isActive)saveDraft()})}
  if(P.StatusBar){try{P.StatusBar.setOverlaysWebView({overlay:true});P.StatusBar.hide()}catch(_){}}}
 
 const hist=[],redoS=[],FD={};let undoing=false;
@@ -620,8 +657,11 @@ function inpaint(cx,W,H,x,y,w,h){
 function setImg(r,ip){r.dataset.er=1;r.dataset.tmp=1;r.dataset.pimg=ip.cv.toDataURL('image/png');r.style.pointerEvents='none';
   [ip.x,ip.y,ip.w,ip.h].forEach((v,i)=>r.setAttribute(['x','y','width','height'][i],v));r.setAttribute('href',r.dataset.pimg);r.setAttribute('preserveAspectRatio','none')}
 function cover(d,on){const m=d._o;if(!m)return;
-  if(on&&!m.cov){const pg=d._pg,r=document.createElementNS(NS,'image');
-    setImg(r,inpaint(pg.ctx,pg.cw,pg.ch,m.ox-1,m.oy-m.ofs,m.w+2,m.ofs*1.25));pg.svg.append(r);m.cov=r}
+  if(on&&!m.cov){const pg=d._pg;let r;
+    if(pg.st===1){r=document.createElementNS(NS,'image');setImg(r,inpaint(pg.ctx,pg.cw,pg.ch,m.ox-1,m.oy-m.ofs,m.w+2,m.ofs*1.25))}
+    else{r=document.createElementNS(NS,'rect');r.dataset.er=1;r.dataset.tmp=1;r.style.pointerEvents='none';
+      [m.ox-1,m.oy-m.ofs,m.w+2,m.ofs*1.25].forEach((v,i)=>r.setAttribute(['x','y','width','height'][i],v));r.setAttribute('fill',`rgb(${m.bg})`)}
+    pg.svg.append(r);m.cov=r}
   if(!on&&m.cov){m.cov.remove();m.cov=null}}
 function dirty(d){const m=d._o;if(!m)return;m.dirty=true;cover(d,true);d.style.color=d.dataset.c}
 function restore(d,s){
@@ -681,7 +721,8 @@ function trace(e,pg,mode){
   addEventListener('pointermove',mv);addEventListener('pointerup',up)}
 function cropPage(pg,X,Y,W,H){pageOp(async d=>{const P=d.getPage(pg.n-1),h=P.getHeight(),x=X/S,y=h-(Y+H)/S,w=W/S,hh=H/S;
   P.translateContent(-x,-y);P.setSize(w,hh);P.setCropBox(0,0,w,hh)})}
-async function build(){
+async function build(){try{return await build1()}finally{progress(null)}}
+async function build1(){
   const b=await build0(),R=[];
   pages.forEach((pg,i)=>{const r=[...pg.svg.children].filter(s=>s.dataset.k==='redact').map(s=>['x','y','width','height'].map(a=>+s.getAttribute(a)));if(r.length)R.push([i,r])});
   if(!R.length)return b;
@@ -707,15 +748,35 @@ $('mExt').onclick=async()=>{
 $('mComp').onclick=async()=>{
   if(!pages.length)return;const q=+prompt('کیفیت (۱۰ تا ۹۰). متن به تصویر تبدیل می‌شود.','60');if(!q)return;
   const b=await build(),sd=await pdfjsLib.getDocument({data:b.slice()}).promise,out=await PDFLib.PDFDocument.create();
-  for(let n=1;n<=sd.numPages;n++){const p=await sd.getPage(n),v1=p.getViewport({scale:1}),vp=p.getViewport({scale:1.3}),cv=el('canvas');
+  for(let n=1;n<=sd.numPages;n++){progress('در حال فشرده‌سازی…',n/sd.numPages);const p=await sd.getPage(n),v1=p.getViewport({scale:1}),vp=p.getViewport({scale:1.3}),cv=el('canvas');
     cv.width=vp.width;cv.height=vp.height;await p.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
     const im=await out.embedJpg(cv.toDataURL('image/jpeg',q/100));out.addPage([v1.width,v1.height]).drawImage(im,{x:0,y:0,width:v1.width,height:v1.height})}
-  const o=await out.save();alert(`قبل: ${(b.length/1048576).toFixed(1)} MB — بعد: ${(o.length/1048576).toFixed(1)} MB`);
+  const o=await out.save();progress(null);alert(`قبل: ${(b.length/1048576).toFixed(1)} MB — بعد: ${(o.length/1048576).toFixed(1)} MB`);
   await dl(new Blob([o],{type:'application/pdf'}),fname.replace('.pdf','-small.pdf'))};
 $('mImg').onclick=async()=>{
   if(!pages.length)return;const n=curPage().n,sd=await pdfjsLib.getDocument({data:(await build()).slice()}).promise,p=await sd.getPage(n),vp=p.getViewport({scale:2}),cv=el('canvas');
   cv.width=vp.width;cv.height=vp.height;await p.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
   await dl(await new Promise(r=>cv.toBlob(r)),fname.replace(/\.pdf$/i,'')+'-p'+n+'.png')};
+let rmode=true,lastH=0,savingD=false;
+function setMode(r){rmode=r;document.body.classList.toggle('rd',r);$('md').textContent=r?'✏️ ویرایش':'👁 مطالعه';
+  if(r){setTool('select');select(null);closeSheets()}
+  document.querySelectorAll('.t').forEach(d=>d.contentEditable=!r&&tool!=='move')}
+$('md').onclick=()=>{if(!bytes)return toast('ابتدا یک PDF باز کنید.');setMode(!rmode)};
+function pgiUpdate(){const e=$('pgi');if(!pages.length){e.hidden=true;return}e.hidden=false;const c=curPage();
+  e.textContent=(c?c.n:1).toLocaleString('fa')+' / '+pages.length.toLocaleString('fa')}
+$('pgi').onclick=()=>{const v=(prompt('شمارهٔ صفحه (۱ تا '+pages.length+')')||'').replace(/[۰-۹]/g,c=>c.charCodeAt(0)-0x6F0),n=Math.round(+v);
+  if(n>=1&&n<=pages.length)scrollTo(0,pages[n-1].w.getBoundingClientRect().top+scrollY-70)};
+addEventListener('scroll',()=>{clearTimeout(pgiUpdate._t);pgiUpdate._t=setTimeout(pgiUpdate,120)},{passive:true});
+async function saveDraft(){if(!bytes||savingD||hist.length===lastH)return;savingD=true;
+  showP=false;try{const b=await build(),ab=b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength);
+    (await idb()).transaction('f','readwrite').objectStore('f').put({name:fname,bytes:ab,ts:Date.now()},'__draft');lastH=hist.length}catch(_){}
+  showP=true;savingD=false}
+async function clearDraft(){lastH=0;try{(await idb()).transaction('f','readwrite').objectStore('f').delete('__draft')}catch(_){}}
+setInterval(saveDraft,20000);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)saveDraft()});
+idb().then(d=>{const r=d.transaction('f').objectStore('f').get('__draft');r.onsuccess=()=>{const v=r.result;if(!v)return;const b=$('resume');
+  b.style.display='block';b.textContent='↩ ادامهٔ «'+v.name+'»';
+  b.onclick=async()=>{bytes=new Uint8Array(v.bytes);fname=v.name;await load();fit();setMode(true);b.style.display='none'}}}).catch(()=>{});
 {const P=$('pal');['#000000','#dc2626','#2563eb','#16a34a','#f59e0b','#7c3aed','#ffffff','#6b7280'].forEach(c=>{
   const b=el('button');b.style.background=c;b.title=c;b.onclick=()=>{$('col').value=c;$('col').dispatchEvent(new Event('change'))};P.append(b)})}
 let ocrW;
@@ -736,9 +797,9 @@ $('ocr').onclick=async()=>{
   if(!bytes)return alert('ابتدا یک PDF باز کنید.');
   const b=$('ocr');b.textContent='⏳ …';
   try{
-    if(!ocrW){ocrW=await Tesseract.createWorker(['fas','eng'],1,{workerPath:'./ocr/worker.min.js',corePath:'./ocr',langPath:'./ocr',gzip:false,workerBlobURL:false});
+    if(!ocrW){ocrW=await Tesseract.createWorker(['fas','eng'],1,{workerPath:'./ocr/worker.min.js',corePath:'./ocr',langPath:'./ocr',gzip:false,workerBlobURL:false,logger:m=>{if(m.status==='recognizing text')progress('در حال تشخیص متن…',m.progress)}});
       await ocrW.setParameters({preserve_interword_spaces:'1',user_defined_dpi:'300'})}
-    const pg=curPage(),sd=await pdfjsLib.getDocument({data:bytes.slice()}).promise,pp=await sd.getPage(pg.n),vp3=pp.getViewport({scale:3}),oc=el('canvas');
+    const pg=curPage();await ensure(pg);const sd=await pdfjsLib.getDocument({data:bytes.slice()}).promise,pp=await sd.getPage(pg.n),vp3=pp.getViewport({scale:3}),oc=el('canvas');
     oc.width=vp3.width;oc.height=vp3.height;await pp.render({canvasContext:oc.getContext('2d'),viewport:vp3}).promise;
     const f=S/3,{data}=await ocrW.recognize(oc);let n=0,low=0;
     for(const ln of data.lines){
@@ -757,18 +818,18 @@ $('ocr').onclick=async()=>{
     }
     alert(n?`${n} خط متن پیدا شد و با فونت و اندازهٔ نزدیک به اصل ساخته شد.`+(low?`\n${low} خط با کادر نارنجی اطمینان کمتری دارد؛ حتماً بازبینی کنید.`:''):'متن جدیدی پیدا نشد.');
   }catch(e){alert('خطای OCR: '+e.message)}
-  b.textContent='🔍 OCR';
+  progress(null);b.textContent='🔍 OCR';
 };
 const wname=d=>{if(d.dataset.f!=='orig')return d.dataset.f;const mk=matchFont(d.dataset.nm);if(mk)return mk;
   return(d.dataset.nm||'Vazirmatn').replace(/[-,](Bold|Italic|Oblique|Regular|Roman).*$/i,'').replace(/(MT|PS)$/,'')||'Vazirmatn'};
 $('word').onclick=async()=>{
   if(!bytes)return alert('ابتدا یک PDF باز کنید.');
-  const bt=$('word');bt.textContent='⏳ …';
+  if(!await warnCovered()||!await warnWord())return;const bt=$('word');bt.textContent='⏳ …';
   try{
     const {Document,Packer,Paragraph,TextRun,ImageRun,HorizontalPositionRelativeFrom:HR0,VerticalPositionRelativeFrom:VR0,FrameAnchorType:FA0}=docx,HR=HR0||{PAGE:'page'},VR=VR0||{PAGE:'page'},FAT=FA0||{PAGE:'page'};
     const sd=await pdfjsLib.getDocument({data:(await build()).slice()}).promise,secs=[],used=new Set(),R=2,k=R/S;
     for(const pg of pages){
-      const p=await sd.getPage(pg.n),v1=p.getViewport({scale:1}),vp=p.getViewport({scale:R}),cv=el('canvas');
+      await ensure(pg);progress('در حال ساخت Word…',pg.n/pages.length);const p=await sd.getPage(pg.n),v1=p.getViewport({scale:1}),vp=p.getViewport({scale:R}),cv=el('canvas');
       cv.width=vp.width;cv.height=vp.height;const cx=cv.getContext('2d',{willReadFrequently:true});
       await p.render({canvasContext:cx,viewport:vp}).promise;
       const T=[];
@@ -797,7 +858,7 @@ $('word').onclick=async()=>{
     let blob;try{blob=await Packer.toBlob(new Document({fonts:fl,sections:secs}))}catch(_){blob=await Packer.toBlob(new Document({sections:secs}))}
     await dl(blob,fname.replace(/\.pdf$/i,'.docx'));
   }catch(err){alert('خطا در ساخت Word: '+err.message)}
-  bt.textContent='Word';
+  progress(null);trimPages();bt.textContent='Word';
 };
 </script>
 </body>
