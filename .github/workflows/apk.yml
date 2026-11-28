@@ -39,6 +39,7 @@ jobs:
           cd ../fonts
           G=https://cdn.jsdelivr.net/gh/rastikerdar
           curl -fsSL -o Vazirmatn.ttf $G/vazirmatn@v33.003/fonts/ttf/Vazirmatn-Regular.ttf
+          curl -fsSL -o Vazirmatn-Bold.ttf $G/vazirmatn@v33.003/fonts/ttf/Vazirmatn-Bold.ttf || true
           curl -fsSL -o Sahel.ttf $G/sahel-font/dist/Sahel.ttf || true
           curl -fsSL -o Shabnam.ttf $G/shabnam-font/dist/Shabnam.ttf || true
           curl -fsSL -o Samim.ttf $G/samim-font/dist/Samim.ttf || true
